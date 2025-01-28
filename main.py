@@ -84,6 +84,14 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         self.config_text.pack(fill=tk.BOTH, expand=True)
 
+        # Create right-click menu for the text area
+        self.text_menu = tk.Menu(self, tearoff=0)
+        self.text_menu.add_command(label="Paste", command=self.paste_text)
+        self.text_menu.add_command(label="Clear", command=lambda: self.config_text.delete("1.0", tk.END))
+
+        # Bind right-click menu
+        self.config_text.bind("<Button-3>", self.show_text_menu)
+
         # Parse button
         parse_btn = ttk.Button(
             text_frame,
@@ -131,8 +139,32 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         self.publish_button.pack(fill=tk.X)
 
-        # Bind paste event
-        self.bind('<Control-v>', self.handle_paste)
+    def show_text_menu(self, event):
+        """Show the right-click menu for the text area"""
+        try:
+            self.text_menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            self.text_menu.grab_release()
+
+    def paste_text(self):
+        """Paste text from clipboard into the text area"""
+        try:
+            # Try to get clipboard content
+            clipboard_text = self.clipboard_get()
+            self.config_text.insert(tk.INSERT, clipboard_text)
+
+            # Try to parse as JSON, but don't show error if it fails
+            try:
+                if clipboard_text.strip():
+                    config_data = json.loads(clipboard_text)
+                    self.process_config(config_data)
+            except json.JSONDecodeError:
+                # Ignore JSON parsing errors during paste
+                pass
+
+        except tk.TclError:
+            # Ignore clipboard errors
+            pass
 
     def parse_text_config(self):
         """Parse configuration from text input"""
@@ -144,6 +176,8 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
             config_data = json.loads(config_text)
             self.process_config(config_data)
+        except json.JSONDecodeError as e:
+            messagebox.showerror("Error", "Invalid JSON format. Please check your configuration.")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to parse configuration: {str(e)}")
 
@@ -165,36 +199,6 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             self.config_text.insert("1.0", json.dumps(config_data, indent=2))
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load configuration: {str(e)}")
-
-    def handle_paste(self, event):
-        """Handle paste event from clipboard"""
-        try:
-            # Try getting the clipboard content with fallbacks
-            try:
-                clipboard = self.clipboard_get()
-            except tk.TclError:
-                try:
-                    clipboard = self.selection_get(selection='CLIPBOARD')
-                except tk.TclError:
-                    messagebox.showerror("Error", "Failed to get clipboard content")
-                    return
-
-            # Update text area with clipboard content
-            self.config_text.delete("1.0", tk.END)
-            self.config_text.insert("1.0", clipboard)
-
-            try:
-                # Try parsing the JSON
-                config_data = json.loads(clipboard)
-                self.process_config(config_data)
-            except json.JSONDecodeError:
-                # Don't show error immediately as user might be still editing
-                pass
-            except Exception as e:
-                messagebox.showerror("Error", f"Invalid configuration format: {str(e)}")
-
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to process clipboard content: {str(e)}")
 
     def process_config(self, config_data):
         try:
