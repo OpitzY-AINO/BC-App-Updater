@@ -84,7 +84,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         editor_frame = ttk.Frame(main_frame, style="TFrame")
         editor_frame.grid(row=1, column=1, sticky="nsew")
 
-        # Text area with scrollbar
+        # Text area with scrollbar and fixed height
         self.config_text = tk.Text(
             editor_frame,
             font=("Consolas", 10),
@@ -94,7 +94,8 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             bg='#181825',
             fg='#cdd6f4',
             padx=10,
-            pady=10
+            pady=10,
+            height=12  # Set a fixed height to match dropzones
         )
 
         text_scrollbar = ttk.Scrollbar(
@@ -108,7 +109,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.config_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         text_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        # Button container between editor and server list
+        # Button container centered below dropzones and editor
         button_frame = ttk.Frame(main_frame, style="TFrame")
         button_frame.grid(row=2, column=0, columnspan=2, sticky="ew", pady=10)
 
