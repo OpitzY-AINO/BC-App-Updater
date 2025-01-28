@@ -49,10 +49,20 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
     def center_window(self, window, width=800, height=600):
         """Center any window on the screen"""
+        # Configure window attributes
+        window.resizable(False, False)
+        window.geometry(f"{width}x{height}")
+        window.update_idletasks()
+
+        # Get screen dimensions
         screen_width = window.winfo_screenwidth()
         screen_height = window.winfo_screenheight()
+
+        # Calculate center position
         center_x = int((screen_width - width) / 2)
         center_y = int((screen_height - height) / 2)
+
+        # Position window
         window.geometry(f"{width}x{height}+{center_x}+{center_y}")
 
     def setup_ui(self):
@@ -204,6 +214,44 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         self.publish_button.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(10, 10))
 
+    def show_progress_window(self, title, width=600, height=400):
+        """Create and center a progress window"""
+        window = tk.Toplevel(self)
+        window.title(title)
+        window.transient(self)
+        window.grab_set()  # Make modal
+
+        # Center the window
+        self.center_window(window, width=width, height=height)
+
+        # Configure progress window
+        progress_frame = ttk.Frame(window, padding="20", style="Card.TFrame")
+        progress_frame.pack(fill=tk.BOTH, expand=True)
+
+        # Add text widget for progress
+        progress_text = scrolledtext.ScrolledText(
+            progress_frame,
+            height=10,
+            font=("Consolas", 10),
+            relief="flat",
+            borderwidth=0,
+            highlightthickness=0,
+            padx=10,
+            pady=10
+        )
+        progress_text.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
+
+        # Add close button (initially enabled)
+        close_btn = ttk.Button(
+            progress_frame,
+            text=get_text('close'),
+            command=window.destroy,
+            style="Accent.TButton"
+        )
+        close_btn.pack(fill=tk.X)
+
+        return window, progress_text, close_btn
+
     def publish_extension(self):
         """Handle the publish button click event"""
         if not self.app_file_path:
@@ -235,41 +283,9 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         deployment_results = []
 
         try:
-            # Create progress dialog
-            progress_window = tk.Toplevel(self)
-            progress_window.title(get_text('deployment_progress'))
-            progress_window.transient(self)
-            progress_window.grab_set() # Make modal
-
-            # Center the progress window
-            self.center_window(progress_window, width=400, height=300)
-
-            # Configure progress window
-            progress_frame = ttk.Frame(progress_window, padding="20", style="Card.TFrame")
-            progress_frame.pack(fill=tk.BOTH, expand=True)
-
-            # Add text widget for progress
-            progress_text = scrolledtext.ScrolledText(
-                progress_frame,
-                height=10,
-                font=("Consolas", 10),
-                relief="flat",
-                borderwidth=0,
-                highlightthickness=0,
-                padx=10,
-                pady=10
-            )
-            progress_text.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
-
-            # Add close button (initially disabled)
-            close_btn = ttk.Button(
-                progress_frame,
-                text=get_text('close'),
-                command=progress_window.destroy,
-                state="disabled",
-                style="Accent.TButton"
-            )
-            close_btn.pack(fill=tk.X)
+            # Create and center progress window
+            progress_window, progress_text, close_btn = self.show_progress_window(get_text('deployment_progress'))
+            close_btn.configure(state="disabled")  # Disable close button initially
 
             # Update progress text
             def update_progress(message):
@@ -429,7 +445,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         popup.minsize(600, 400)
         popup.transient(self)
 
-        # Center the popup window
+        # Center the popup window with improved function
         self.center_window(popup, width=800, height=600)
 
         # Configure popup grid
@@ -489,14 +505,14 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         apply_btn.grid(row=0, column=1, sticky="e", padx=(5, 0))
 
-        # Close button
+        # Close button with increased padding for better separation
         close_btn = ttk.Button(
             button_frame,
             text=get_text('close'),
             style="Accent.TButton",
             command=popup.destroy
         )
-        close_btn.grid(row=0, column=2, sticky="e", padx=(20, 0))  # Increased padding between buttons
+        close_btn.grid(row=0, column=2, sticky="e", padx=(40, 0))  # Increased padding between buttons
 
         # Configure button frame grid
         button_frame.grid_columnconfigure(1, weight=1)
@@ -566,79 +582,50 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             messagebox.showerror("Error", get_text('select_server_test'))
             return
 
-        # Create progress dialog
-        progress_window = tk.Toplevel(self)
-        progress_window.title(get_text('connection_test_progress'))
-        progress_window.transient(self)
-
-        # Center the progress window
-        self.center_window(progress_window, width=400, height=300)
-
-        # Configure progress window
-        progress_frame = ttk.Frame(progress_window, padding="20", style="Card.TFrame")
-        progress_frame.pack(fill=tk.BOTH, expand=True)
-
-        # Add text widget for progress
-        progress_text = scrolledtext.ScrolledText(
-            progress_frame,
-            height=10,
-            font=("Consolas", 10),
-            relief="flat",
-            borderwidth=0,
-            highlightthickness=0,
-            padx=10,
-            pady=10
-        )
-        progress_text.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
-
-        # Add close button
-        close_btn = ttk.Button(
-            progress_frame,
-            text=get_text('close'),
-            command=progress_window.destroy,
-            style="Accent.TButton"
-        )
-        close_btn.pack(fill=tk.X)
-
-        # Make the window modal
-        progress_window.grab_set()
-
-        # Update progress text
-        def update_progress(message):
-            progress_text.insert(tk.END, f"{message}\n")
-            progress_text.see(tk.END)
-            progress_text.update()
-
-        # Test connection to each selected server
-        test_results = []
-        for config in selected_configs:
-            update_progress(get_text('testing_connection', server=config['name']))
-            success, message = test_server_connection(config)
-            test_results.append((config['name'], success, message))
-
-            # Update progress with result
-            status = "✓" if success else "✗"
-            update_progress(f"{status} {message}")
-
-        # Show final summary
-        update_progress(f"\n{get_text('test_summary')}")
-        successful = sum(1 for _, success, _ in test_results if success)
-        failed = len(test_results) - successful
-        update_progress(get_text('successful', count=successful))
-        update_progress(get_text('failed', count=failed))
-
-        # Show error message if any tests failed
-        if failed > 0:
-            messagebox.showerror(
-                get_text('test_complete'),
-                get_text('test_complete_with_errors', count=failed)
-            )
-        else:
-            messagebox.showinfo(
-                get_text('test_complete'),
-                get_text('all_tests_successful')
+        try:
+            # Create and center progress window
+            progress_window, progress_text, close_btn = self.show_progress_window(
+                get_text('connection_test_progress')
             )
 
+            # Update progress text
+            def update_progress(message):
+                progress_text.insert(tk.END, f"{message}\n")
+                progress_text.see(tk.END)
+                progress_text.update()
+
+            # Test connection to each selected server
+            test_results = []
+            for config in selected_configs:
+                update_progress(get_text('testing_connection', server=config['name']))
+                success, message = test_server_connection(config)
+                test_results.append((config['name'], success, message))
+
+                # Update progress with result
+                status = "✓" if success else "✗"
+                update_progress(f"{status} {message}")
+
+            # Show final summary
+            update_progress(f"\n{get_text('test_summary')}")
+            successful = sum(1 for _, success, _ in test_results if success)
+            failed = len(test_results) - successful
+            update_progress(get_text('successful', count=successful))
+            update_progress(get_text('failed', count=failed))
+
+            # Show error message if any tests failed
+            if failed > 0:
+                messagebox.showerror(
+                    get_text('test_complete'),
+                    get_text('test_complete_with_errors', count=failed)
+                )
+            else:
+                messagebox.showinfo(
+                    get_text('test_complete'),
+                    get_text('all_tests_successful')
+                )
+
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
 
 
 def preprocess_json_text(json_text):
