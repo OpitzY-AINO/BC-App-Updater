@@ -283,10 +283,12 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             messagebox.showerror("Error", get_text('invalid_app'))
 
     def clear_all(self):
-        """Clear both the text area and server configurations"""
-        self.config_text.delete("1.0", tk.END)
+        """Clear server configurations"""
+        # Clear configurations from manager
         self.config_manager.clear_configurations()
+        # Update server list to reflect cleared state
         self.update_server_list()
+        # Reset drop zone text
         self.config_drop_zone.update_text(get_text('drop_json'))
 
     def handle_server_click(self, event):
