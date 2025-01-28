@@ -259,7 +259,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         # Add new items with modern styling
         for config in self.server_configs:
-            frame = ttk.Frame(self.servers_frame)
+            frame = ttk.Frame(self.servers_frame, style="ServerList.TFrame")
             frame.pack(fill=tk.X, pady=5, padx=15)
 
             # Initialize checkbox as unchecked
@@ -276,11 +276,16 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
             name_label = ttk.Label(
                 frame,
-                text=display_text
+                text=display_text,
+                style="TLabel"
             )
             name_label.pack(side=tk.LEFT, padx=10)
 
             config['checkbox_var'] = var
+
+        # Update canvas scroll region
+        self.servers_canvas.update_idletasks()
+        self.servers_canvas.configure(scrollregion=self.servers_canvas.bbox('all'))
 
     def publish_extension(self):
         if not self.app_file_path:
