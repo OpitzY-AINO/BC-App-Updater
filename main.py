@@ -81,10 +81,10 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         self.config_drop_zone.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        # Calculate total height of dropzones for editor
+        # Calculate total height of dropzones
         app_frame.update_idletasks()
         config_frame.update_idletasks()
-        total_height = app_frame.winfo_height() + config_frame.winfo_height() + 10  # +10 for padding
+        total_height = app_frame.winfo_reqheight() + config_frame.winfo_reqheight()
 
         # Right side: Text editor with matching height
         editor_frame = ttk.Frame(main_frame, style="TFrame")
