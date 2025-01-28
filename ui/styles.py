@@ -133,65 +133,6 @@ def apply_styles(root):
         padding=(0, 10)
     )
 
-    # Configure server list styles
-    style.configure(
-        "ServerList.TFrame",
-        background=colors['bg_darker'],
-        relief="flat",  # Remove border from individual frames
-        borderwidth=0
-    )
-
-    # Add specific style for server list items
-    style.configure(
-        "ServerList.TLabel",
-        background=colors['bg_darker'],
-        foreground=colors['text'],
-        font=("Segoe UI", 10)
-    )
-
-    style.configure(
-        "ServerList.TCheckbutton",
-        background=colors['bg_darker'],
-        foreground=colors['text'],
-        font=("Segoe UI", 10)
-    )
-
-    style.map(
-        "ServerList.TCheckbutton",
-        background=[("active", colors['bg_darker'])],
-        foreground=[("active", colors['primary'])]
-    )
-
-    # Configure text widget style (used in config input)
-    root.option_add("*Text.background", colors['bg_darker'])
-    root.option_add("*Text.foreground", colors['text'])
-    root.option_add("*Text.selectBackground", colors['primary'])
-    root.option_add("*Text.selectForeground", colors['bg_dark'])
-    root.option_add("*Text.insertBackground", colors['text'])  # Cursor color
-
-    # Configure canvas background for server list
-    root.option_add("*Canvas.background", colors['bg_darker'])
-    root.option_add("*Canvas.highlightthickness", 0)
-
-    # Configure modern scrollbar style
-    style.configure(
-        "TScrollbar",
-        background=colors['bg_darker'],
-        troughcolor=colors['bg_darker'],
-        borderwidth=0,
-        relief="flat",
-        arrowsize=0,  # Hide arrows
-        width=10  # Thinner scrollbar
-    )
-
-    style.map(
-        "TScrollbar",
-        background=[
-            ("active", colors['active']),
-            ("!active", colors['border'])
-        ]
-    )
-
     # Configure Treeview styles
     style.configure(
         "ServerList.Treeview",
@@ -213,8 +154,31 @@ def apply_styles(root):
     # Configure Treeview selection colors
     style.map(
         "ServerList.Treeview",
-        background=[("selected", colors['bg_darker'])],
-        foreground=[("selected", colors['text'])]
+        background=[("selected", colors['hover'])],
+        foreground=[("selected", colors['primary'])]
+    )
+
+    # Configure Canvas background for server list
+    root.option_add("*Canvas.background", colors['bg_darker'])
+    root.option_add("*Canvas.highlightthickness", 0)
+
+    # Configure modern scrollbar style
+    style.configure(
+        "TScrollbar",
+        background=colors['bg_darker'],
+        troughcolor=colors['bg_darker'],
+        borderwidth=0,
+        relief="flat",
+        arrowsize=0,  # Hide arrows
+        width=10  # Thinner scrollbar
+    )
+
+    style.map(
+        "TScrollbar",
+        background=[
+            ("active", colors['active']),
+            ("!active", colors['border'])
+        ]
     )
 
     style.configure(

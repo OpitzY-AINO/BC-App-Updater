@@ -131,21 +131,21 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         # Create Treeview for server list
         self.server_tree = ttk.Treeview(
             list_frame,
-            columns=("selected", "name", "details"),
+            columns=("type", "name", "environment"),
             show="headings",
-            selectmode="none",
+            selectmode="browse",  # Changed to allow selection
             style="ServerList.Treeview"
         )
 
         # Configure columns
-        self.server_tree.heading("selected", text="")
+        self.server_tree.heading("type", text="Type")
         self.server_tree.heading("name", text="Name")
-        self.server_tree.heading("details", text="Details")
+        self.server_tree.heading("environment", text="Environment")
 
         # Set column widths
-        self.server_tree.column("selected", width=50, stretch=False)
+        self.server_tree.column("type", width=100, stretch=False)
         self.server_tree.column("name", width=200, stretch=True)
-        self.server_tree.column("details", width=400, stretch=True)
+        self.server_tree.column("environment", width=300, stretch=True)
 
         # Create scrollbar for Treeview
         tree_scrollbar = ttk.Scrollbar(
@@ -161,11 +161,10 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.server_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0), pady=5)
         tree_scrollbar.pack(side=tk.RIGHT, fill=tk.Y, pady=5)
 
-        # Store checkbox variables in a dictionary
-        self.checkbox_vars = {}
 
-        # Bind checkbox click handler
-        self.server_tree.bind("<Button-1>", self.handle_checkbox_click)
+        # Bind click handler
+        self.server_tree.bind('<Button-1>', self.handle_server_click)
+
 
         # Publish button with accent styling
         self.publish_button = ttk.Button(
@@ -176,19 +175,18 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         self.publish_button.pack(fill=tk.X)
 
-    def handle_checkbox_click(self, event):
-        """Handle clicks in the checkbox column"""
+    def handle_server_click(self, event):
+        """Handle clicks on server rows"""
         region = self.server_tree.identify_region(event.x, event.y)
         if region == "cell":
-            column = self.server_tree.identify_column(event.x)
-            if column == "#1":  # First column (checkbox)
-                item = self.server_tree.identify_row(event.y)
-                if item:
-                    current_val = self.checkbox_vars.get(item, tk.BooleanVar(value=False))
-                    current_val.set(not current_val.get())
-                    self.checkbox_vars[item] = current_val
-                    # Update checkbox display
-                    self.server_tree.set(item, "selected", "☒" if current_val.get() else "☐")
+            item = self.server_tree.identify_row(event.y)
+            if item:
+                # Toggle selection state
+                current_selection = self.server_tree.selection()
+                if item in current_selection:
+                    self.server_tree.selection_remove(item)
+                else:
+                    self.server_tree.selection_add(item)
 
     def process_config(self, config_data):
         try:
@@ -202,33 +200,30 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         # Clear existing items
         for item in self.server_tree.get_children():
             self.server_tree.delete(item)
-        self.checkbox_vars.clear()
 
         # Add new items
         for i, config in enumerate(self.server_configs):
-            # Create display text based on environment type
-            if config['environmentType'].lower() == 'sandbox':
-                details = f"{config['environmentName']}"
-            elif config['environmentType'].lower() == 'onprem':
-                details = f"{config['serverInstance']}@{config['server']}"
+            env_type = config['environmentType']
+            name = config['name']
 
-            # Create checkbox variable
-            var = tk.BooleanVar(value=False)
-            item_id = f"server_{i}"
-            self.checkbox_vars[item_id] = var
+            # Set the environment/instance detail based on type
+            if env_type.lower() == 'sandbox':
+                environment = config['environmentName']
+            else:  # OnPrem
+                environment = config['serverInstance']
 
+            # Insert item with the new column structure
             self.server_tree.insert(
                 "",
                 tk.END,
-                item_id,
-                values=("☐", config['name'], details)
+                f"server_{i}",
+                values=(env_type, name, environment)
             )
 
     def clear_all(self):
         """Clear both the text area and server configurations"""
         self.config_text.delete("1.0", tk.END)
         self.server_configs = []
-        self.checkbox_vars.clear()
         self.update_server_list()
         self.config_drop_zone.update_text("Drop server config JSON here\nor click to browse")
 
@@ -298,14 +293,18 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             messagebox.showerror("Error", "Please select an app file first")
             return
 
-        selected_configs = [
-            config for i, config in enumerate(self.server_configs)
-            if self.checkbox_vars.get(f"server_{i}").get()
-        ]
-
-        if not selected_configs:
+        # Get selected items from Treeview
+        selected_items = self.server_tree.selection()
+        if not selected_items:
             messagebox.showerror("Error", "Please select at least one server")
             return
+
+        # Map selected items back to configurations
+        selected_configs = []
+        for item in selected_items:
+            index = int(item.split('_')[1])
+            if 0 <= index < len(self.server_configs):
+                selected_configs.append(self.server_configs[index])
 
         try:
             for config in selected_configs:
@@ -345,6 +344,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         except tk.TclError:
             # Ignore clipboard errors
             pass
+
 
 
 if __name__ == "__main__":
