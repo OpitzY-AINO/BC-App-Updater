@@ -20,15 +20,16 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.app_file_path = None
         self.server_configs = []
 
-        self.setup_ui()
+        # Apply styles first
         apply_styles(self)
+        self.setup_ui()
 
     def setup_ui(self):
         # Main container with padding
-        main_frame = ttk.Frame(self, padding="20")
+        main_frame = ttk.Frame(self, padding="20", style="TFrame")
         main_frame.pack(fill=tk.BOTH, expand=True)
 
-        # Header
+        # Header with modern styling
         header = ttk.Label(
             main_frame,
             text="Business Central Extension Publisher",
@@ -37,11 +38,11 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         header.pack(fill=tk.X, pady=(0, 20))
 
         # Top section for file uploads
-        top_frame = ttk.Frame(main_frame)
+        top_frame = ttk.Frame(main_frame, style="TFrame")
         top_frame.pack(fill=tk.X, pady=(0, 20))
 
         # App file drop zone in its own frame
-        app_frame = ttk.LabelFrame(top_frame, text="Extension File", padding="10")
+        app_frame = ttk.LabelFrame(top_frame, text="Extension File", padding="10", style="TLabelframe")
         app_frame.pack(fill=tk.X, pady=(0, 10))
 
         self.app_drop_zone = DragDropZone(
@@ -50,18 +51,18 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             self.handle_app_drop,
             ['.app']
         )
-        self.app_drop_zone.pack(fill=tk.X)
+        self.app_drop_zone.pack(fill=tk.X, padx=5, pady=5)
 
         # Server configuration section
-        config_frame = ttk.LabelFrame(main_frame, text="Server Configuration", padding="10")
+        config_frame = ttk.LabelFrame(main_frame, text="Server Configuration", padding="10", style="TLabelframe")
         config_frame.pack(fill=tk.X, pady=(0, 20))
 
         # Config input methods container
-        config_methods = ttk.Frame(config_frame)
+        config_methods = ttk.Frame(config_frame, style="TFrame")
         config_methods.pack(fill=tk.X)
 
         # Left side: Drop zone
-        drop_frame = ttk.Frame(config_methods)
+        drop_frame = ttk.Frame(config_methods, style="TFrame")
         drop_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 5))
 
         self.config_drop_zone = DragDropZone(
@@ -73,72 +74,73 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.config_drop_zone.pack(fill=tk.BOTH, expand=True)
 
         # Right side: Text input
-        text_frame = ttk.Frame(config_methods)
+        text_frame = ttk.Frame(config_methods, style="TFrame")
         text_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0))
 
-        # Clear button
+        # Button container
+        button_frame = ttk.Frame(text_frame, style="TFrame")
+        button_frame.pack(fill=tk.X, pady=(0, 5))
+
+        # Clear and Parse buttons side by side
         clear_btn = ttk.Button(
-            text_frame,
+            button_frame,
             text="Clear",
             command=lambda: self.config_text.delete("1.0", tk.END),
             style="Accent.TButton"
         )
-        clear_btn.pack(fill=tk.X, pady=(0, 5))
+        clear_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 2))
 
-        self.config_text = scrolledtext.ScrolledText(
-            text_frame,
-            height=8,
-            width=40,
-            font=("Consolas", 10)
-        )
-        self.config_text.pack(fill=tk.BOTH, expand=True)
-
-        # Create right-click menu for the text area
-        self.text_menu = tk.Menu(self, tearoff=0)
-        self.text_menu.add_command(label="Clear", command=lambda: self.config_text.delete("1.0", tk.END))
-
-        # Bind right-click menu
-        self.config_text.bind("<Button-3>", self.show_text_menu)
-
-        # Parse button
         parse_btn = ttk.Button(
-            text_frame,
+            button_frame,
             text="Parse Configuration",
             command=self.parse_text_config,
             style="Accent.TButton"
         )
-        parse_btn.pack(fill=tk.X, pady=(5, 0))
+        parse_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(2, 0))
+
+        # Configuration text area
+        self.config_text = scrolledtext.ScrolledText(
+            text_frame,
+            height=8,
+            width=40,
+            font=("Consolas", 10),
+            relief="solid",
+            borderwidth=1
+        )
+        self.config_text.pack(fill=tk.BOTH, expand=True)
 
         # Server list section
-        list_frame = ttk.LabelFrame(main_frame, text="Server Configurations", padding="10")
+        list_frame = ttk.LabelFrame(main_frame, text="Server Configurations", padding="10", style="TLabelframe")
         list_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 20))
 
         # Server list with modern styling
         self.server_list = ttk.Frame(list_frame, style="ServerList.TFrame")
-        self.server_list.pack(fill=tk.BOTH, expand=True)
+        self.server_list.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         # Scrollable server list
-        scrollbar = ttk.Scrollbar(self.server_list)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-
         self.servers_canvas = tk.Canvas(
             self.server_list,
-            yscrollcommand=scrollbar.set,
-            background='#ffffff',
-            highlightthickness=0
+            highlightthickness=0,
+            bd=0
         )
-        self.servers_frame = ttk.Frame(self.servers_canvas)
+        scrollbar = ttk.Scrollbar(self.server_list, orient="vertical", command=self.servers_canvas.yview)
 
-        scrollbar.config(command=self.servers_canvas.yview)
+        self.servers_frame = ttk.Frame(self.servers_canvas, style="ServerList.TFrame")
 
+        self.servers_frame.bind(
+            '<Configure>',
+            lambda e: self.servers_canvas.configure(scrollregion=self.servers_canvas.bbox("all"))
+        )
+
+        self.servers_canvas.create_window((0, 0), window=self.servers_frame, anchor="nw", width=self.servers_canvas.winfo_width())
+
+        # Configure the canvas to expand with the window
         self.servers_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        self.servers_canvas.create_window((0, 0), window=self.servers_frame, anchor='nw')
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        self.servers_frame.bind('<Configure>', lambda e: self.servers_canvas.configure(
-            scrollregion=self.servers_canvas.bbox('all')
-        ))
+        self.servers_canvas.configure(yscrollcommand=scrollbar.set)
 
-        # Publish button
+        # Publish button with accent styling
         self.publish_button = ttk.Button(
             main_frame,
             text="Publish to Selected Servers",
@@ -252,11 +254,11 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         # Add new items with modern styling
         for config in self.server_configs:
-            frame = ttk.Frame(self.servers_frame)
+            frame = ttk.Frame(self.servers_frame, style="ServerList.TFrame")
             frame.pack(fill=tk.X, pady=5, padx=5)
 
             var = tk.BooleanVar(value=True)
-            cb = ttk.Checkbutton(frame, variable=var)
+            cb = ttk.Checkbutton(frame, variable=var, style="ServerList.TCheckbutton")
             cb.pack(side=tk.LEFT)
 
             # Create display text based on environment type
@@ -268,7 +270,8 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
             name_label = ttk.Label(
                 frame,
-                text=display_text
+                text=display_text,
+                style="ServerList.TLabel"
             )
             name_label.pack(side=tk.LEFT, padx=5)
 
