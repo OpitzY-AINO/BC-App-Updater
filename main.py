@@ -98,21 +98,32 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         parse_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(2, 0))
 
-        # Configuration text area
-        self.config_text = scrolledtext.ScrolledText(
+        # Configuration text area with modern scrollbar
+        self.config_text = tk.Text(
             text_frame,
             height=8,
             width=40,
             font=("Consolas", 10),
             relief="solid",
-            borderwidth=1
+            borderwidth=1,
+            bg='#181825',  # Match bg_darker color
+            fg='#cdd6f4',  # Match text color
         )
 
-        # Apply modern scrollbar style to the Text widget
-        text_scrollbar = self.config_text.vbar
-        text_scrollbar.configure(style="TScrollbar")
+        # Create and configure modern scrollbar for text
+        text_scrollbar = ttk.Scrollbar(
+            text_frame,
+            orient="vertical",
+            command=self.config_text.yview,
+            style="TScrollbar"
+        )
 
-        self.config_text.pack(fill=tk.BOTH, expand=True)
+        self.config_text.configure(yscrollcommand=text_scrollbar.set)
+
+        # Pack text and scrollbar
+        self.config_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        text_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
 
         # Server list section
         list_frame = ttk.LabelFrame(main_frame, text="Server Configurations", padding="10", style="TLabelframe")
@@ -129,11 +140,13 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             bd=0,
             background='#181825'  # Match bg_darker color
         )
+
+        # Create and configure modern scrollbar for server list
         scrollbar = ttk.Scrollbar(
             self.server_list,
             orient="vertical",
             command=self.servers_canvas.yview,
-            style="TScrollbar"  # Apply modern scrollbar style
+            style="TScrollbar"
         )
 
         self.servers_frame = ttk.Frame(self.servers_canvas, style="ServerList.TFrame")
