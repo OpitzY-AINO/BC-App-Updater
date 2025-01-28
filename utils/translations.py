@@ -1,7 +1,7 @@
 """Translation module for the Business Central Publisher application."""
 
 TRANSLATIONS = {
-    'app_title': 'Business Central Erweiterung Publisher',
+    'app_title': 'BC Extension Publisher',
     'extension_file': 'Erweiterungsdatei',
     'drop_app': 'APP-Datei hier ablegen\noder zum Durchsuchen klicken',
     'server_config': 'Server-Konfiguration',
