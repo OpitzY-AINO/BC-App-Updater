@@ -21,14 +21,45 @@ def apply_styles(root):
         'error': '#f7768e'           # Red for error states
     }
 
-    # Configure main window
-    root.configure(bg=colors['bg_darker'])
-
     # Configure frame styles
     style.configure(
         "TFrame",
         background=colors['bg_darker']
     )
+
+    # Server list specific styles
+    style.configure(
+        "ServerList.TFrame",
+        background=colors['bg_lighter'],
+        relief="solid",
+        borderwidth=2
+    )
+
+    # Configure checkbox and label styles for server list
+    style.configure(
+        "TCheckbutton",
+        background=colors['bg_lighter'],
+        foreground=colors['text'],
+        font=("Segoe UI", 10),
+        padding=(5, 5)
+    )
+
+    style.map(
+        "TCheckbutton",
+        background=[("active", colors['bg_lighter'])],
+        foreground=[("active", colors['primary'])]
+    )
+
+    style.configure(
+        "TLabel",
+        background=colors['bg_lighter'],
+        foreground=colors['text'],
+        font=("Segoe UI", 10)
+    )
+
+    # Configure main window
+    root.configure(bg=colors['bg_darker'])
+
 
     style.configure(
         "Card.TFrame",
@@ -104,43 +135,14 @@ def apply_styles(root):
         foreground=[("active", colors['text'])]
     )
 
-    # Configure checkbox styles with modern look
-    style.configure(
-        "TCheckbutton",
-        background=colors['bg_darker'],
-        foreground=colors['text'],
-        font=("Segoe UI", 10),
-        padding=(5, 5)
-    )
 
-    style.map(
-        "TCheckbutton",
-        background=[("active", colors['bg_darker'])],
-        foreground=[("active", colors['primary'])]
-    )
-
-    # Configure label styles
-    style.configure(
-        "TLabel",
-        background=colors['bg_darker'],
-        foreground=colors['text'],
-        font=("Segoe UI", 10)
-    )
-
+    # Configure Header label styles
     style.configure(
         "Header.TLabel",
         background=colors['bg_darker'],
         foreground=colors['primary'],
         font=("Segoe UI", 24, "bold"),
         padding=(0, 15)
-    )
-
-    # Configure server list frame
-    style.configure(
-        "ServerList.TFrame",
-        background=colors['bg_lighter'],
-        relief="solid",
-        borderwidth=2
     )
 
     # Configure text area
