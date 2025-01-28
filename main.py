@@ -54,28 +54,22 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         # Extension File Section with reduced padding
         app_frame = ttk.LabelFrame(main_frame, text=get_text('extension_file'), padding="10", style="TLabelframe")
         app_frame.grid(row=1, column=0, sticky="ew", pady=(0, 10))
-        app_frame.grid_columnconfigure(0, weight=1)  # Make frame expand horizontally
-
-        # Create a container for the app drop zone that matches the config zone width
-        app_drop_container = ttk.Frame(app_frame, style="TFrame")
-        app_drop_container.pack(fill=tk.X, padx=5, pady=5)
-        app_drop_container.grid_columnconfigure(0, weight=1)  # Make container expand horizontally
 
         self.app_drop_zone = DragDropZone(
-            app_drop_container,
+            app_frame,
             get_text('drop_app'),
             self.handle_app_drop,
             ['.app']
         )
-        self.app_drop_zone.pack(fill=tk.BOTH, expand=True)  # Changed to BOTH for consistent height
+        self.app_drop_zone.pack(fill=tk.X, padx=5, pady=5)
 
-        # Server Configuration Section with consistent spacing
+        # Server Configuration Section with reduced padding
         config_frame = ttk.LabelFrame(main_frame, text=get_text('server_config'), padding="10", style="TLabelframe")
         config_frame.grid(row=2, column=0, sticky="ew", pady=(0, 10))
 
         # Inner frame for drop zone and text area
         config_inner = ttk.Frame(config_frame, style="TFrame")
-        config_inner.pack(fill=tk.X, expand=True)  
+        config_inner.pack(fill=tk.X, expand=True)
 
         # Left side: Drop zone
         drop_frame = ttk.Frame(config_inner, style="TFrame")
@@ -89,18 +83,18 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         self.config_drop_zone.pack(fill=tk.BOTH, expand=True)
 
-        # Right side: buttons with fixed width and consistent spacing
+        # Right side: buttons only
         button_frame = ttk.Frame(config_inner, style="TFrame")
-        button_frame.pack(side=tk.LEFT, padx=(5, 0))
+        button_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0))
 
-        # Clear and Editor buttons with fixed width
+        # Clear and Editor buttons
         clear_btn = ttk.Button(
             button_frame,
             text=get_text('clear'),
             command=self.clear_all,
             style="Accent.TButton"
         )
-        clear_btn.pack(side=tk.LEFT, padx=(0, 2))
+        clear_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 2))
 
         editor_btn = ttk.Button(
             button_frame,
@@ -108,7 +102,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             command=self.open_editor_popup,
             style="Accent.TButton"
         )
-        editor_btn.pack(side=tk.LEFT, padx=2)
+        editor_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=2)
 
 
         # Server List Section with increased size
@@ -142,10 +136,10 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.server_tree.heading("environment", text=get_text('col_environment'), anchor="center")
 
         # Configure column widths and alignment
-        self.server_tree.column("selected", width=80, stretch=False, anchor="center")  # Reduced width
-        self.server_tree.column("type", width=120, stretch=False, anchor="center")     # Adjusted width
-        self.server_tree.column("name", width=300, stretch=True, anchor="center")       # Keep width
-        self.server_tree.column("environment", width=300, stretch=True, anchor="center") # Keep width
+        self.server_tree.column("selected", width=120, stretch=False, anchor="center")  # Further increased width
+        self.server_tree.column("type", width=150, stretch=False, anchor="center")      # Increased width more
+        self.server_tree.column("name", width=300, stretch=True, anchor="center")       # Increased width more
+        self.server_tree.column("environment", width=400, stretch=True, anchor="center") # Increased width more
 
         self.server_tree.pack(fill=tk.BOTH, expand=True)
 
@@ -175,20 +169,17 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         self.test_connection_btn.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
-        # Publish Button Section with consistent width
+        # Publish Button Section
         button_container = ttk.Frame(main_frame, style="TFrame")
         button_container.grid(row=4, column=0, sticky="ew", pady=(0, 10))
 
-        publish_frame = ttk.Frame(button_container, style="TFrame")
-        publish_frame.pack()  # Center the frame
-
         self.publish_button = ttk.Button(
-            publish_frame,
+            button_container,
             text=get_text('publish_button'),
             command=self.publish_extension,
             style="Accent.TButton"
         )
-        self.publish_button.pack(pady=10)  # Added vertical padding to match screenshot
+        self.publish_button.pack(fill=tk.X)
 
     def publish_extension(self):
         """Handle the publish button click event"""
@@ -617,7 +608,6 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
                 get_text('test_complete'),
                 get_text('all_tests_successful')
             )
-
 
 
 def preprocess_json_text(json_text):
