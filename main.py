@@ -14,6 +14,9 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
     def __init__(self):
         super().__init__()
 
+        # Apply styles first before creating any widgets
+        apply_styles(self)
+
         self.title(get_text('app_title'))
         self.geometry("1200x800")
         self.minsize(1000, 700)
@@ -26,8 +29,6 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
-        # Apply styles first
-        apply_styles(self)
         self.setup_ui()
 
         # Load saved configurations
@@ -51,7 +52,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         header.grid(row=0, column=0, sticky="ew", pady=(0, 20))
 
-        # Extension File Section with reduced padding
+        # Extension File Section
         app_frame = ttk.LabelFrame(main_frame, text=get_text('extension_file'), padding="10", style="TLabelframe")
         app_frame.grid(row=1, column=0, sticky="ew", pady=(0, 10))
 
@@ -63,7 +64,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         self.app_drop_zone.pack(fill=tk.X, padx=5, pady=5)
 
-        # Server Configuration Section with reduced padding
+        # Server Configuration Section
         config_frame = ttk.LabelFrame(main_frame, text=get_text('server_config'), padding="10", style="TLabelframe")
         config_frame.grid(row=2, column=0, sticky="ew", pady=(0, 10))
 
@@ -83,7 +84,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         self.config_drop_zone.pack(fill=tk.BOTH, expand=True)
 
-        # Right side: buttons only
+        # Right side: buttons
         button_frame = ttk.Frame(config_inner, style="TFrame")
         button_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0))
 
@@ -104,13 +105,11 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         editor_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=2)
 
-
-        # Server List Section with increased size
+        # Server List Section
         list_frame = ttk.LabelFrame(main_frame, text=get_text('server_configs'), padding="10", style="TLabelframe")
         list_frame.grid(row=3, column=0, sticky="nsew", pady=(0, 10))
 
-        # Configure grid weights to give more space to the server list
-        main_frame.grid_rowconfigure(3, weight=3)  # Increased weight for server list
+        # Configure grid weights
         list_frame.grid_rowconfigure(0, weight=1)
         list_frame.grid_columnconfigure(0, weight=1)
 
@@ -120,29 +119,28 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         list_container.grid_rowconfigure(0, weight=1)
         list_container.grid_columnconfigure(0, weight=1)
 
-        # Create Treeview first
+        # Create Treeview
         self.server_tree = ttk.Treeview(
             list_container,
             columns=("selected", "type", "name", "environment"),
             show="headings",
             style="ServerList.Treeview",
-            height=10  # Set minimum number of visible items
+            height=10
         )
 
-        # Configure columns with translated headers
+        # Configure columns
         self.server_tree.heading("selected", text=get_text('col_select'), anchor="center")
         self.server_tree.heading("type", text=get_text('col_type'), anchor="center")
         self.server_tree.heading("name", text=get_text('col_name'), anchor="center")
         self.server_tree.heading("environment", text=get_text('col_environment'), anchor="center")
 
-        # Configure column widths and alignment
-        self.server_tree.column("selected", width=120, stretch=False, anchor="center")  # Further increased width
-        self.server_tree.column("type", width=150, stretch=False, anchor="center")      # Increased width more
-        self.server_tree.column("name", width=300, stretch=True, anchor="center")       # Increased width more
-        self.server_tree.column("environment", width=400, stretch=True, anchor="center") # Increased width more
+        # Configure column widths
+        self.server_tree.column("selected", width=120, stretch=False, anchor="center")
+        self.server_tree.column("type", width=150, stretch=False, anchor="center")
+        self.server_tree.column("name", width=300, stretch=True, anchor="center")
+        self.server_tree.column("environment", width=400, stretch=True, anchor="center")
 
-        self.server_tree.pack(fill=tk.BOTH, expand=True)
-
+        # Create scrollbar
         tree_scrollbar = ttk.Scrollbar(
             list_container,
             orient="vertical",
@@ -164,7 +162,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             button_container,
             text=get_text('test_connection'),
             command=self.test_selected_connections,
-            state="disabled",  # Initially disabled
+            state="disabled",
             style="Accent.TButton"
         )
         self.test_connection_btn.pack(side=tk.LEFT, fill=tk.X, expand=True)
@@ -177,6 +175,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             button_container,
             text=get_text('publish_button'),
             command=self.publish_extension,
+            state="disabled",
             style="Accent.TButton"
         )
         self.publish_button.pack(fill=tk.X)

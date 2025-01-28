@@ -5,18 +5,18 @@ import os
 
 class DragDropZone(ttk.Frame):
     def __init__(self, parent, text, callback, file_types=None):
-        super().__init__(parent)
+        super().__init__(parent, style="Card.TFrame")
         self.callback = callback
         self.file_types = file_types or []
 
-        # Create the drop zone
+        # Create the drop zone with explicit background and style
         self.drop_target = ttk.Label(
             self,
             text=text,
             padding=20,
             style="DropZone.TLabel"
         )
-        self.drop_target.pack(fill=tk.BOTH, expand=True)
+        self.drop_target.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
 
         # Bind events
         self.drop_target.bind('<Button-1>', self.browse_file)

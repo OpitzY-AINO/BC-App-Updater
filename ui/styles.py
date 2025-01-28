@@ -21,8 +21,15 @@ def apply_styles(root):
         'success': '#a6e3a1'          # Success green
     }
 
-    # Configure main window and root widgets
+    # Configure root window
     root.configure(bg=colors['bg_dark'])
+    style.configure('.', background=colors['bg_dark'])
+
+    # Configure all ttk widgets default background
+    for widget in ['TFrame', 'TLabel', 'TButton', 'TEntry', 'TLabelframe']:
+        style.configure(widget, background=colors['bg_dark'])
+
+    # Text widget configuration
     root.option_add("*Text.background", colors['bg_darker'])
     root.option_add("*Text.foreground", colors['text'])
     root.option_add("*Text.selectBackground", colors['primary'])
@@ -52,7 +59,7 @@ def apply_styles(root):
         background=colors['bg_darker']
     )
 
-    # Configure modern labelframe - removed borders
+    # Configure labelframe styles
     style.configure(
         "TLabelframe",
         background=colors['bg_dark'],
@@ -99,7 +106,7 @@ def apply_styles(root):
         borderwidth=0
     )
 
-    # Configure modern button styles
+    # Configure button styles
     style.configure(
         "Accent.TButton",
         background=colors['primary'],
@@ -122,37 +129,10 @@ def apply_styles(root):
         ]
     )
 
-    # Configure checkbox styles
-    style.configure(
-        "TCheckbutton",
-        background=colors['bg_dark'],
-        foreground=colors['text'],
-        font=("Segoe UI", 10)
-    )
+    # Configure Treeview styles - Windows-specific fixes
+    style.layout("ServerList.Treeview", [('ServerList.Treeview.treearea', {'sticky': 'nswe'})])
 
-    style.map(
-        "TCheckbutton",
-        background=[("active", colors['bg_dark'])],
-        foreground=[("active", colors['primary'])]
-    )
-
-    # Configure label styles
-    style.configure(
-        "TLabel",
-        background=colors['bg_dark'],
-        foreground=colors['text'],
-        font=("Segoe UI", 10)
-    )
-
-    style.configure(
-        "Header.TLabel",
-        background=colors['bg_dark'],
-        foreground=colors['text'],
-        font=("Segoe UI", 16, "bold"),
-        padding=(0, 10)
-    )
-
-    # Configure Treeview styles
+    # Configure Treeview colors for Windows
     style.configure(
         "ServerList.Treeview",
         background=colors['bg_darker'],
@@ -164,6 +144,21 @@ def apply_styles(root):
         padding=(15, 8)
     )
 
+    # Map Treeview colors for different states
+    style.map(
+        "ServerList.Treeview",
+        background=[
+            ("selected", colors['hover']),
+            ("active", colors['active'])
+        ],
+        foreground=[
+            ("selected", colors['text']),
+            ("active", colors['text'])
+        ],
+        fieldbackground=[("!disabled", colors['bg_darker'])]  # Windows-specific fix
+    )
+
+    # Configure Treeview heading style
     style.configure(
         "ServerList.Treeview.Heading",
         background=colors['bg_darker'],
@@ -171,6 +166,11 @@ def apply_styles(root):
         relief="flat",
         borderwidth=0,
         font=("Segoe UI", 12, "bold")
+    )
+
+    style.map(
+        "ServerList.Treeview.Heading",
+        background=[("active", colors['hover'])]
     )
 
     # Configure Canvas background
@@ -196,40 +196,35 @@ def apply_styles(root):
         ]
     )
 
-    style.configure(
-        "Canvas.TFrame",
-        background=colors['bg_dark']
-    )
-
-    # Configure Toplevel dialog styles
+    # Configure Toplevel dialog styles with Windows-specific fixes
     root.option_add("*Toplevel.background", colors['bg_dark'])
     root.option_add("*Dialog.background", colors['bg_dark'])
+    root.option_add("*Dialog.TFrame.background", colors['bg_dark'])
+    root.option_add("*Dialog.TLabel.background", colors['bg_dark'])
+    root.option_add("*Dialog.TButton.background", colors['bg_dark'])
+
+    # Configure message boxes
+    root.option_add("*Message.background", colors['bg_dark'])
+    root.option_add("*Message.foreground", colors['text'])
+    root.option_add("*Dialog.msg.background", colors['bg_dark'])
+    root.option_add("*Dialog.msg.foreground", colors['text'])
+
+    # Configure menus
     root.option_add("*Menu.background", colors['bg_darker'])
     root.option_add("*Menu.foreground", colors['text'])
     root.option_add("*Menu.selectColor", colors['primary'])
     root.option_add("*Menu.activeBackground", colors['hover'])
     root.option_add("*Menu.activeForeground", colors['text'])
 
-    # Configure Text widget styles
+    # Configure Text and ScrolledText widget styles
     root.option_add("*Text.background", colors['bg_darker'])
     root.option_add("*Text.foreground", colors['text'])
     root.option_add("*Text.selectBackground", colors['primary'])
     root.option_add("*Text.selectForeground", colors['bg_dark'])
     root.option_add("*Text.insertBackground", colors['text'])
 
-    # Configure ScrolledText widget styles
     root.option_add("*ScrolledText.background", colors['bg_darker'])
     root.option_add("*ScrolledText.foreground", colors['text'])
     root.option_add("*ScrolledText.selectBackground", colors['primary'])
     root.option_add("*ScrolledText.selectForeground", colors['bg_dark'])
     root.option_add("*ScrolledText.insertBackground", colors['text'])
-
-    # Configure message box styles
-    root.option_add("*Message.background", colors['bg_dark'])
-    root.option_add("*Message.foreground", colors['text'])
-    root.option_add("*Dialog.msg.background", colors['bg_dark'])
-    root.option_add("*Dialog.msg.foreground", colors['text'])
-
-    # Configure popup menu styles
-    root.option_add("*Popup.background", colors['bg_darker'])
-    root.option_add("*Popup.foreground", colors['text'])
