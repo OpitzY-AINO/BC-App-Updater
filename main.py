@@ -232,7 +232,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         window.grab_set()  # Make modal
 
         # Center the window
-        self.center_window(window, width=width, height=height)
+        self.center_window(window)
 
         # Configure progress window
         progress_frame = ttk.Frame(window, padding="20", style="Card.TFrame")
@@ -485,7 +485,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.center_window(popup)
 
         # Center the popup window with improved function
-        self.center_window(popup, width=800, height=600)
+        self.center_window(popup)
 
         # Configure popup grid
         popup.grid_rowconfigure(0, weight=1)
@@ -724,9 +724,6 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
                     get_text('test_complete'),
                     get_text('all_tests_successful')
                 )
-
-        except Exception as e:
-            messagebox.showerror("Error", str(e))
 
 
 def preprocess_json_text(json_text):
