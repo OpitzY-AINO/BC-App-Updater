@@ -167,15 +167,34 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             messagebox.showerror("Error", f"Failed to load configuration: {str(e)}")
 
     def handle_paste(self, event):
+        """Handle paste event from clipboard"""
         try:
-            clipboard = self.clipboard_get()
+            # Try getting the clipboard content with fallbacks
+            try:
+                clipboard = self.clipboard_get()
+            except tk.TclError:
+                try:
+                    clipboard = self.selection_get(selection='CLIPBOARD')
+                except tk.TclError:
+                    messagebox.showerror("Error", "Failed to get clipboard content")
+                    return
+
+            # Update text area with clipboard content
             self.config_text.delete("1.0", tk.END)
             self.config_text.insert("1.0", clipboard)
 
-            config_data = json.loads(clipboard)
-            self.process_config(config_data)
+            try:
+                # Try parsing the JSON
+                config_data = json.loads(clipboard)
+                self.process_config(config_data)
+            except json.JSONDecodeError:
+                # Don't show error immediately as user might be still editing
+                pass
+            except Exception as e:
+                messagebox.showerror("Error", f"Invalid configuration format: {str(e)}")
+
         except Exception as e:
-            messagebox.showerror("Error", f"Invalid configuration format: {str(e)}")
+            messagebox.showerror("Error", f"Failed to process clipboard content: {str(e)}")
 
     def process_config(self, config_data):
         try:
