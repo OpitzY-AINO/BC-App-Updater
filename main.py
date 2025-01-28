@@ -2,20 +2,33 @@ import tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext, filedialog
 from tkinterdnd2 import DND_FILES, TkinterDnD
 import json
+import os
 from ui.drag_drop import DragDropZone
 from ui.styles import apply_styles
 from utils.json_parser import parse_server_config
 from utils.powershell_manager import execute_powershell, publish_to_environment, test_server_connection
 from utils.config_manager import ConfigurationManager
 from utils.translations import get_text
-import os
 
 class BusinessCentralPublisher(TkinterDnD.Tk):
     def __init__(self):
         super().__init__()
 
-        # Apply styles first before creating any widgets
+        # Force ttk to use custom style
+        style = ttk.Style(self)
+        style.theme_use('default')
+
+        # Apply styles before any widget creation
         apply_styles(self)
+
+        # Configure root window background
+        self.configure(background='#1e1e2e')  # Dark background color
+
+        # Set background for all tkinter widgets
+        self.option_add('*Background', '#1e1e2e')
+        self.option_add('*background', '#1e1e2e')
+        self.option_add('*Foreground', '#cdd6f4')
+        self.option_add('*foreground', '#cdd6f4')
 
         self.title(get_text('app_title'))
         self.geometry("1200x800")

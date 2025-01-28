@@ -3,7 +3,7 @@ import tkinter as tk
 
 def apply_styles(root):
     """Apply custom dark mode styles to the application"""
-    style = ttk.Style()
+    style = ttk.Style(root)
 
     # Modern dark color palette
     colors = {
@@ -21,13 +21,25 @@ def apply_styles(root):
         'success': '#a6e3a1'          # Success green
     }
 
+    # Force default theme for consistency
+    style.theme_use('default')
+
     # Configure root window
     root.configure(bg=colors['bg_dark'])
     style.configure('.', background=colors['bg_dark'])
 
+    # Configure global options for all widgets
+    root.option_add('*Background', colors['bg_dark'])
+    root.option_add('*background', colors['bg_dark'])
+    root.option_add('*Foreground', colors['text'])
+    root.option_add('*foreground', colors['text'])
+    root.option_add('*selectBackground', colors['primary'])
+    root.option_add('*selectForeground', colors['bg_dark'])
+
     # Configure all ttk widgets default background
-    for widget in ['TFrame', 'TLabel', 'TButton', 'TEntry', 'TLabelframe']:
+    for widget in ['TFrame', 'TLabel', 'TButton', 'TEntry', 'TLabelframe', 'Treeview']:
         style.configure(widget, background=colors['bg_dark'])
+        style.configure(widget, foreground=colors['text'])
 
     # Text widget configuration
     root.option_add("*Text.background", colors['bg_darker'])
