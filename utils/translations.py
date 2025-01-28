@@ -13,6 +13,7 @@ TRANSLATIONS = {
     'config_editor': 'Konfigurationseditor',
     'apply_changes': 'Änderungen übernehmen',
     'open_editor': 'Editor öffnen',
+    'close': 'Schließen',
 
     # Column headers
     'col_select': 'Auswahl',
@@ -30,7 +31,7 @@ TRANSLATIONS = {
     'deployment_complete': 'Veröffentlichung abgeschlossen',
     'deployment_complete_with_errors': 'Veröffentlichung mit {count} Fehler(n) abgeschlossen.\nDetails im Fortschrittsfenster prüfen.',
     'all_deployments_successful': 'Alle Veröffentlichungen erfolgreich abgeschlossen!',
-    'close': 'Schließen',
+
 
     # Errors
     'select_app': 'Bitte wählen Sie zuerst eine APP-Datei aus',
