@@ -1,6 +1,6 @@
 [
   {
-    "name": "AEMDemo - DO NOT PUBLISH",
+    "name": "AEMDemo",
     "environmentType": "Sandbox",
     "authentication": "AAD",
     "tenant": "946372e3-6895-4e61-aa7d-9f8ebab9791b",
