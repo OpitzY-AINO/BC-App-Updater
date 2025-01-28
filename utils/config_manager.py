@@ -2,6 +2,7 @@ import json
 import os
 from typing import List, Dict, Optional
 import tkinter.messagebox as messagebox
+from .translations import get_text
 
 class ConfigurationManager:
     def __init__(self, config_file: str = "saved_configurations.json"):
@@ -35,20 +36,20 @@ class ConfigurationManager:
     def add_configurations(self, new_configs: List[Dict], ask_overwrite: bool = True) -> None:
         """
         Add new configurations to the existing ones.
-        
+
         Args:
             new_configs: List of new configurations to add
             ask_overwrite: Whether to ask for confirmation before overwriting existing configs
         """
         for new_config in new_configs:
             existing_config = self.find_config_by_name(new_config['name'])
-            
+
             if existing_config:
                 if ask_overwrite:
-                    # Ask user for confirmation
+                    # Ask user for confirmation with translated message
                     if messagebox.askyesno(
                         "Configuration Exists",
-                        f"A configuration named '{new_config['name']}' already exists.\nDo you want to overwrite it?"
+                        get_text('config_exists', name=new_config['name'])
                     ):
                         # Replace existing configuration
                         idx = self.configurations.index(existing_config)
@@ -61,7 +62,7 @@ class ConfigurationManager:
             else:
                 # Add new configuration
                 self.configurations.append(new_config)
-                
+
         # Save after modifications
         self.save_configurations()
 

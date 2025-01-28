@@ -7,15 +7,16 @@ from ui.styles import apply_styles
 from utils.json_parser import parse_server_config
 from utils.powershell_manager import execute_powershell, publish_to_environment
 from utils.config_manager import ConfigurationManager
+from utils.translations import get_text
 import os
 
 class BusinessCentralPublisher(TkinterDnD.Tk):
     def __init__(self):
         super().__init__()
 
-        self.title("Business Central Extension Publisher")
-        self.geometry("900x700")
-        self.minsize(800, 600)
+        self.title(get_text('app_title'))
+        self.geometry("1200x800")
+        self.minsize(1000, 700)
 
         # Application state
         self.app_file_path = None
@@ -34,37 +35,37 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
     def setup_ui(self):
         """Set up the user interface with grid layout"""
-        # Main container
-        main_frame = ttk.Frame(self, padding="20", style="TFrame")
+        # Main container with increased padding
+        main_frame = ttk.Frame(self, padding="30", style="TFrame")
         main_frame.grid(row=0, column=0, sticky="nsew")
 
         # Configure grid weights for main_frame
         main_frame.grid_rowconfigure(3, weight=1)  # Server list row
         main_frame.grid_columnconfigure(0, weight=1)
 
-        # Header with modern styling
+        # Header
         header = ttk.Label(
             main_frame,
-            text="Business Central Extension Publisher",
+            text=get_text('app_title'),
             style="Header.TLabel"
         )
-        header.grid(row=0, column=0, sticky="ew", pady=(0, 20))
+        header.grid(row=0, column=0, sticky="ew", pady=(0, 30))
 
         # Extension File Section
-        app_frame = ttk.LabelFrame(main_frame, text="Extension File", padding="10", style="TLabelframe")
-        app_frame.grid(row=1, column=0, sticky="ew", pady=(0, 10))
+        app_frame = ttk.LabelFrame(main_frame, text=get_text('extension_file'), padding="20", style="TLabelframe")
+        app_frame.grid(row=1, column=0, sticky="ew", pady=(0, 20))
 
         self.app_drop_zone = DragDropZone(
             app_frame,
-            "Drop .app file here\nor click to browse",
+            get_text('drop_app'),
             self.handle_app_drop,
             ['.app']
         )
         self.app_drop_zone.pack(fill=tk.X, padx=5, pady=5)
 
         # Server Configuration Section
-        config_frame = ttk.LabelFrame(main_frame, text="Server Configuration", padding="10", style="TLabelframe")
-        config_frame.grid(row=2, column=0, sticky="ew", pady=(0, 10))
+        config_frame = ttk.LabelFrame(main_frame, text=get_text('server_config'), padding="20", style="TLabelframe")
+        config_frame.grid(row=2, column=0, sticky="ew", pady=(0, 20))
 
         # Inner frame for drop zone and text area
         config_inner = ttk.Frame(config_frame, style="TFrame")
@@ -72,11 +73,11 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         # Left side: Drop zone
         drop_frame = ttk.Frame(config_inner, style="TFrame")
-        drop_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 5))
+        drop_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
 
         self.config_drop_zone = DragDropZone(
             drop_frame,
-            "Drop server config JSON here\nor click to browse",
+            get_text('drop_json'),
             self.handle_config_drop,
             ['.json']
         )
@@ -84,39 +85,42 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         # Right side: Text input and buttons
         text_frame = ttk.Frame(config_inner, style="TFrame")
-        text_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0))
+        text_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(10, 0))
 
         # Button container
         button_frame = ttk.Frame(text_frame, style="TFrame")
-        button_frame.pack(fill=tk.X, pady=(0, 5))
+        button_frame.pack(fill=tk.X, pady=(0, 10))
 
         # Clear and Parse buttons
         clear_btn = ttk.Button(
             button_frame,
-            text="Clear",
+            text=get_text('clear'),
             command=self.clear_all,
             style="Accent.TButton"
         )
-        clear_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 2))
+        clear_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
 
         parse_btn = ttk.Button(
             button_frame,
-            text="Parse Configuration",
+            text=get_text('parse_config'),
             command=self.parse_text_config,
             style="Accent.TButton"
         )
-        parse_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(2, 0))
+        parse_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(5, 0))
 
-        # Text area with scrollbar
+        # Text area with scrollbar - borderless with padding
         self.config_text = tk.Text(
             text_frame,
             height=8,
             width=40,
             font=("Consolas", 10),
-            relief="solid",
-            borderwidth=1,
+            relief="flat",
+            borderwidth=0,
+            highlightthickness=0,
             bg='#181825',
-            fg='#cdd6f4'
+            fg='#cdd6f4',
+            padx=10,
+            pady=10
         )
 
         text_scrollbar = ttk.Scrollbar(
@@ -130,19 +134,17 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.config_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         text_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        # Server List Section (with weight for expansion)
-        list_frame = ttk.LabelFrame(main_frame, text="Server Configurations", padding="10", style="TLabelframe")
-        list_frame.grid(row=3, column=0, sticky="nsew", pady=(0, 10))
+        # Server List Section
+        list_frame = ttk.LabelFrame(main_frame, text=get_text('server_configs'), padding="20", style="TLabelframe")
+        list_frame.grid(row=3, column=0, sticky="nsew", pady=(0, 20))
 
-        # Configure list_frame grid weights
         list_frame.grid_rowconfigure(0, weight=1)
         list_frame.grid_columnconfigure(0, weight=1)
 
         # Server list with scrollbar
         list_container = ttk.Frame(list_frame, style="TFrame")
-        list_container.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+        list_container.grid(row=0, column=0, sticky="nsew")
 
-        # Configure list_container grid weights
         list_container.grid_rowconfigure(0, weight=1)
         list_container.grid_columnconfigure(0, weight=1)
 
@@ -153,18 +155,17 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             style="ServerList.Treeview"
         )
 
-        # Configure columns
-        self.server_tree.heading("selected", text="Select")
-        self.server_tree.heading("type", text="Type")
-        self.server_tree.heading("name", text="Name")
-        self.server_tree.heading("environment", text="Environment / Instance")
+        # Configure columns with translated headers
+        self.server_tree.heading("selected", text=get_text('col_select'))
+        self.server_tree.heading("type", text=get_text('col_type'))
+        self.server_tree.heading("name", text=get_text('col_name'))
+        self.server_tree.heading("environment", text=get_text('col_environment'))
 
         self.server_tree.column("selected", width=60, stretch=False)
         self.server_tree.column("type", width=100, stretch=False)
         self.server_tree.column("name", width=200, stretch=True)
         self.server_tree.column("environment", width=300, stretch=True)
 
-        # Scrollbar for server list
         tree_scrollbar = ttk.Scrollbar(
             list_container,
             orient="vertical",
@@ -173,25 +174,146 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
 
         self.server_tree.configure(yscrollcommand=tree_scrollbar.set)
-
-        # Grid layout for server list and scrollbar
         self.server_tree.grid(row=0, column=0, sticky="nsew")
         tree_scrollbar.grid(row=0, column=1, sticky="ns")
 
-        # Bind click handler
         self.server_tree.bind('<Button-1>', self.handle_server_click)
 
-        # Publish Button Section (fixed at bottom)
-        button_container = ttk.Frame(main_frame, style="Card.TFrame")
-        button_container.grid(row=4, column=0, sticky="ew", padx=5, pady=10)
+        # Publish Button Section
+        button_container = ttk.Frame(main_frame, style="TFrame")
+        button_container.grid(row=4, column=0, sticky="ew", pady=(0, 10))
 
         self.publish_button = ttk.Button(
             button_container,
-            text="Publish to Selected Servers",
+            text=get_text('publish_button'),
             command=self.publish_extension,
             style="Accent.TButton"
         )
-        self.publish_button.pack(fill=tk.X, padx=5, pady=5)
+        self.publish_button.pack(fill=tk.X)
+
+    def publish_extension(self):
+        """Handle the publish button click event"""
+        if not self.app_file_path:
+            messagebox.showerror("Error", get_text('select_app'))
+            return
+
+        selected_items = self.server_tree.get_children()
+        selected_configs = []
+        for item in selected_items:
+            values = self.server_tree.item(item)['values']
+            if values[0] == "☑":
+                index = int(item.split('_')[1])
+                if 0 <= index < len(self.config_manager.get_configurations()):
+                    selected_configs.append(self.config_manager.get_configurations()[index])
+
+        if not selected_configs:
+            messagebox.showerror("Error", get_text('select_server'))
+            return
+
+        # Confirm deployment
+        app_name = os.path.basename(self.app_file_path)
+        selected_count = len(selected_configs)
+        if not messagebox.askyesno(
+            "Confirm Deployment",
+            get_text('confirm_deployment', app_name=app_name, count=selected_count),
+        ):
+            return
+
+        deployment_results = []
+
+        try:
+            # Create progress dialog
+            progress_window = tk.Toplevel(self)
+            progress_window.title(get_text('deployment_progress'))
+            progress_window.geometry("400x300")
+            progress_window.transient(self)
+            progress_window.grab_set()
+
+            # Configure progress window
+            progress_frame = ttk.Frame(progress_window, padding="20", style="Card.TFrame")
+            progress_frame.pack(fill=tk.BOTH, expand=True)
+
+            # Add text widget for progress
+            progress_text = scrolledtext.ScrolledText(
+                progress_frame,
+                height=10,
+                font=("Consolas", 10),
+                bg='#181825',
+                fg='#cdd6f4',
+                relief="flat",
+                borderwidth=0,
+                highlightthickness=0,
+                padx=10,
+                pady=10
+            )
+            progress_text.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
+
+            # Add close button (initially disabled)
+            close_btn = ttk.Button(
+                progress_frame,
+                text=get_text('close'),
+                command=progress_window.destroy,
+                state="disabled",
+                style="Accent.TButton"
+            )
+            close_btn.pack(fill=tk.X)
+
+            # Update progress text
+            def update_progress(message):
+                progress_text.insert(tk.END, f"{message}\n")
+                progress_text.see(tk.END)
+                progress_text.update()
+
+            # Deploy to each selected server
+            for config in selected_configs:
+                update_progress(get_text('deploying_to', server=config['name']))
+
+                success, message = publish_to_environment(self.app_file_path, config)
+                deployment_results.append((config['name'], success, message))
+
+                # Update progress with result
+                status = "✓" if success else "✗"
+                update_progress(f"{status} {message}")
+
+            # Show final summary
+            update_progress(f"\n{get_text('deployment_summary')}")
+            successful = sum(1 for _, success, _ in deployment_results if success)
+            failed = len(deployment_results) - successful
+            update_progress(get_text('successful', count=successful))
+            update_progress(get_text('failed', count=failed))
+
+            # Enable close button
+            close_btn.configure(state="normal")
+
+            # Show error message if any deployments failed
+            if failed > 0:
+                messagebox.showerror(
+                    get_text('deployment_complete'),
+                    get_text('deployment_complete_with_errors', count=failed)
+                )
+            else:
+                messagebox.showinfo(
+                    get_text('deployment_complete'),
+                    get_text('all_deployments_successful')
+                )
+
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+
+    def handle_app_drop(self, file_path):
+        """Handle dropping an app file"""
+        if file_path.lower().endswith('.app'):
+            self.app_file_path = file_path
+            self.app_drop_zone.update_text(f"Selected: {os.path.basename(file_path)}")
+        else:
+            messagebox.showerror("Error", get_text('invalid_app'))
+
+    def clear_all(self):
+        """Clear both the text area and server configurations"""
+        self.config_text.delete("1.0", tk.END)
+        self.config_manager.clear_configurations()
+        self.update_server_list()
+        self.config_drop_zone.update_text(get_text('drop_json'))
 
     def handle_server_click(self, event):
         """Handle clicks on server rows"""
@@ -241,52 +363,12 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
                 values=("☐", env_type, name, environment)
             )
 
-    def clear_all(self):
-        """Clear both the text area and server configurations"""
-        self.config_text.delete("1.0", tk.END)
-        self.config_manager.clear_configurations()
-        self.update_server_list()
-        self.config_drop_zone.update_text("Drop server config JSON here\nor click to browse")
-
-    def handle_app_drop(self, file_path):
-        if file_path.lower().endswith('.app'):
-            self.app_file_path = file_path
-            self.app_drop_zone.update_text(f"Selected: {os.path.basename(file_path)}")
-        else:
-            messagebox.showerror("Error", "Please select a valid .app file")
-
-    def handle_config_drop(self, file_path):
-        try:
-            with open(file_path, 'r') as f:
-                config_text = f.read()
-
-                # Preprocess the JSON text
-                processed_text = preprocess_json_text(config_text)
-
-                # Try to parse the configuration
-                config_data = json.loads(processed_text)
-
-                # Format and display the properly formatted JSON
-                formatted_json = json.dumps(config_data, indent=2)
-                self.config_text.delete("1.0", tk.END)
-                self.config_text.insert("1.0", formatted_json)
-
-                self.process_config(config_data)
-
-        except json.JSONDecodeError as e:
-            line_no = int(str(e).split('line')[1].split()[0])
-            col_no = int(str(e).split('column')[1].split()[0])
-            error_msg = f"JSON Format Error:\n{str(e)}\n\nPlease check line {line_no}, column {col_no} of your JSON configuration."
-            messagebox.showerror("Error", error_msg)
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to load configuration: {str(e)}")
-
     def parse_text_config(self):
         """Parse configuration from text input"""
         try:
             config_text = self.config_text.get("1.0", tk.END).strip()
             if not config_text:
-                messagebox.showerror("Error", "Please enter configuration JSON")
+                messagebox.showerror("Error", get_text('enter_config'))
                 return
 
             # Preprocess the JSON text
@@ -309,112 +391,6 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         except Exception as e:
             messagebox.showerror("Error", f"Failed to parse configuration: {str(e)}")
 
-    def publish_extension(self):
-        """Handle the publish button click event"""
-        if not self.app_file_path:
-            messagebox.showerror("Error", "Please select an app file first")
-            return
-
-        # Get selected items from Treeview
-        selected_items = self.server_tree.get_children()
-        selected_configs = []
-        for item in selected_items:
-            values = self.server_tree.item(item)['values']
-            if values[0] == "☑":
-                index = int(item.split('_')[1])
-                if 0 <= index < len(self.config_manager.get_configurations()):
-                    selected_configs.append(self.config_manager.get_configurations()[index])
-
-
-        if not selected_configs:
-            messagebox.showerror("Error", "Please select at least one server")
-            return
-
-        # Confirm deployment
-        app_name = os.path.basename(self.app_file_path)
-        selected_count = len(selected_configs)
-        if not messagebox.askyesno(
-            "Confirm Deployment",
-            f"Deploy {app_name} to {selected_count} selected server(s)?",
-        ):
-            return
-
-        # Map selected items back to configurations
-        deployment_results = []
-
-        try:
-            # Create progress dialog
-            progress_window = tk.Toplevel(self)
-            progress_window.title("Deployment Progress")
-            progress_window.geometry("400x300")
-            progress_window.transient(self)
-            progress_window.grab_set()
-
-            # Configure progress window
-            progress_frame = ttk.Frame(progress_window, padding="20", style="Card.TFrame")
-            progress_frame.pack(fill=tk.BOTH, expand=True)
-
-            # Add text widget for progress
-            progress_text = scrolledtext.ScrolledText(
-                progress_frame,
-                height=10,
-                font=("Consolas", 10),
-                bg='#181825',
-                fg='#cdd6f4'
-            )
-            progress_text.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
-
-            # Add close button (initially disabled)
-            close_btn = ttk.Button(
-                progress_frame,
-                text="Close",
-                command=progress_window.destroy,
-                state="disabled",
-                style="Accent.TButton"
-            )
-            close_btn.pack(fill=tk.X)
-
-            # Update progress text
-            def update_progress(message):
-                progress_text.insert(tk.END, f"{message}\n")
-                progress_text.see(tk.END)
-                progress_text.update()
-
-            # Deploy to each selected server
-            for config in selected_configs:
-                update_progress(f"\nDeploying to {config['name']}...")
-
-                success, message = publish_to_environment(self.app_file_path, config)
-                deployment_results.append((config['name'], success, message))
-
-                # Update progress with result
-                status = "✓" if success else "✗"
-                update_progress(f"{status} {message}")
-
-            # Show final summary
-            update_progress("\n=== Deployment Summary ===")
-            successful = sum(1 for _, success, _ in deployment_results if success)
-            failed = len(deployment_results) - successful
-            update_progress(f"Successful: {successful}")
-            update_progress(f"Failed: {failed}")
-
-            # Enable close button
-            close_btn.configure(state="normal")
-
-            # Show error message if any deployments failed
-            if failed > 0:
-                messagebox.showerror(
-                    "Deployment Complete",
-                    f"Deployment completed with {failed} error(s).\nCheck the progress window for details."
-                )
-            else:
-                messagebox.showinfo(
-                    "Deployment Complete",
-                    "All deployments completed successfully!"
-                )
-
-        except Exception as e:
-            messagebox.showerror("Error", f"Deployment failed: {str(e)}")
 
     def show_text_menu(self, event):
         """Show the right-click menu for the text area"""
