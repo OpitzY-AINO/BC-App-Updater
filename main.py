@@ -85,7 +85,6 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         app_frame.update_idletasks()
         config_frame.update_idletasks()
         total_height = app_frame.winfo_height() + config_frame.winfo_height() + 10  # +10 for padding
-        left_frame.configure(height=total_height)
 
         # Right side: Text editor with matching height
         editor_frame = ttk.Frame(main_frame, style="TFrame")
@@ -144,10 +143,9 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         parse_btn.pack(side=tk.LEFT, padx=5)
 
-        # Server List Section below buttons
+        # Server List Section
         list_frame = ttk.LabelFrame(main_frame, text=get_text('server_configs'), padding="10", style="TLabelframe")
         list_frame.grid(row=3, column=0, columnspan=2, sticky="nsew", pady=(0, 10))
-
         list_container = ttk.Frame(list_frame, style="TFrame")
         list_container.pack(fill=tk.BOTH, expand=True)
 
