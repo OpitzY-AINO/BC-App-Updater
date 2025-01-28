@@ -2,153 +2,137 @@ from tkinter import ttk
 import tkinter as tk
 
 def apply_styles(root):
-    """Apply custom dark mode styles to the application"""
+    """Apply custom styles to the application"""
     style = ttk.Style()
 
-    # Tokyo Night inspired color palette
+    # Modern color palette
     colors = {
-        'bg_dark': '#1a1b26',         # Dark background
-        'bg_darker': '#16161e',       # Darker background for contrast
-        'bg_lighter': '#24283b',      # Slightly lighter background for elements
-        'primary': '#7aa2f7',         # Modern blue accent
-        'secondary': '#bb9af7',       # Purple accent
-        'hover': '#3d59a1',          # Darker blue for hover
-        'active': '#2ac3de',         # Cyan for active states
-        'border': '#414868',         # Border color
-        'text': '#c0caf5',           # Main text color
-        'text_secondary': '#565f89',  # Secondary text color
-        'success': '#9ece6a',        # Green for success states
-        'error': '#f7768e'           # Red for error states
+        'bg': '#ffffff',
+        'primary': '#2563eb',  # Modern blue
+        'secondary': '#64748b', # Slate
+        'hover': '#dbeafe',    # Light blue
+        'active': '#bfdbfe',   # Slightly darker blue
+        'border': '#e2e8f0',   # Subtle border
+        'text': '#1e293b',     # Dark slate
+        'text_secondary': '#64748b'  # Medium slate
     }
 
     # Configure main window
-    root.configure(bg=colors['bg_darker'])
+    root.configure(bg=colors['bg'])
 
-    # Header styling
+    # Configure frame styles
     style.configure(
-        "Header.TLabel",
-        background=colors['bg_darker'],
-        foreground=colors['primary'],
-        font=("Segoe UI", 24, "bold"),
-        padding=(0, 20)
-    )
-
-    # Modern Frame styling
-    style.configure(
-        "Modern.TFrame",
-        background=colors['bg_darker']
-    )
-
-    # Server list styling
-    style.configure(
-        "ServerItem.TFrame",
-        background=colors['bg_lighter'],
-        relief="solid",
-        borderwidth=1
+        "TFrame",
+        background=colors['bg']
     )
 
     style.configure(
-        "ServerInfo.TFrame",
-        background=colors['bg_lighter']
+        "Card.TFrame",
+        background=colors['bg'],
+        borderwidth=1,
+        relief="solid"
     )
 
-    # Server list elements
+    # Configure modern labelframe
     style.configure(
-        "Server.TCheckbutton",
-        background=colors['bg_lighter'],
-        foreground=colors['text'],
-        font=("Segoe UI", 10)
-    )
-
-    style.map(
-        "Server.TCheckbutton",
-        background=[("active", colors['bg_lighter'])],
-        foreground=[("active", colors['primary'])]
-    )
-
-    style.configure(
-        "ServerName.TLabel",
-        background=colors['bg_lighter'],
-        foreground=colors['text'],
-        font=("Segoe UI", 12, "bold")
-    )
-
-    style.configure(
-        "ServerDetails.TLabel",
-        background=colors['bg_lighter'],
-        foreground=colors['text_secondary'],
-        font=("Segoe UI", 10)
-    )
-
-    # LabelFrame styling
-    style.configure(
-        "Modern.TLabelframe",
-        background=colors['bg_darker'],
-        foreground=colors['text'],
-        borderwidth=2,
+        "TLabelframe",
+        background=colors['bg'],
+        borderwidth=1,
         relief="solid"
     )
 
     style.configure(
-        "Modern.TLabelframe.Label",
-        background=colors['bg_darker'],
-        foreground=colors['primary'],
-        font=("Segoe UI", 12, "bold"),
-        padding=(15, 5)
+        "TLabelframe.Label",
+        background=colors['bg'],
+        foreground=colors['text'],
+        font=("Segoe UI", 11, "bold"),
+        padding=(10, 5)
     )
 
-    # Drop zone styling
+    # Configure drop zone styles with modern look
     style.configure(
         "DropZone.TLabel",
-        background=colors['bg_dark'],
+        background=colors['bg'],
         foreground=colors['text'],
         font=("Segoe UI", 11),
-        padding=25,
+        padding=20,
         relief="solid",
-        borderwidth=2
+        borderwidth=2,
+        bordercolor=colors['border']
     )
 
     style.configure(
         "DropZoneHover.TLabel",
         background=colors['hover'],
-        foreground=colors['text'],
+        foreground=colors['primary'],
         font=("Segoe UI", 11),
-        padding=25,
+        padding=20,
         relief="solid",
-        borderwidth=2
+        borderwidth=2,
+        bordercolor=colors['primary']
     )
 
     style.configure(
         "DropZoneActive.TLabel",
         background=colors['active'],
-        foreground=colors['bg_dark'],
+        foreground=colors['primary'],
         font=("Segoe UI", 11),
-        padding=25,
+        padding=20,
         relief="solid",
-        borderwidth=2
+        borderwidth=2,
+        bordercolor=colors['primary']
     )
 
-    # Modern button styling
+    # Configure modern button style
     style.configure(
         "Accent.TButton",
         background=colors['primary'],
-        foreground=colors['text'],
+        foreground='white',
         font=("Segoe UI", 10, "bold"),
-        padding=(25, 12),
-        relief="flat"
+        padding=(20, 10),
+        borderwidth=0
     )
 
     style.map(
         "Accent.TButton",
         background=[("active", colors['hover'])],
-        foreground=[("active", colors['text'])],
-        relief=[("active", "flat")]
+        foreground=[("active", colors['primary'])]
     )
 
-    # Configure text widget colors
-    root.option_add("*Text.background", colors['bg_dark'])
-    root.option_add("*Text.foreground", colors['text'])
-    root.option_add("*Text.selectBackground", colors['primary'])
-    root.option_add("*Text.selectForeground", colors['bg_dark'])
-    root.option_add("*Text.insertBackground", colors['text'])
-    root.option_add("*Text.font", ("Consolas", 11))
+    # Configure checkbox styles
+    style.configure(
+        "TCheckbutton",
+        background=colors['bg'],
+        foreground=colors['text'],
+        font=("Segoe UI", 10)
+    )
+
+    style.map(
+        "TCheckbutton",
+        background=[("active", colors['bg'])],
+        foreground=[("active", colors['primary'])]
+    )
+
+    # Configure label styles
+    style.configure(
+        "TLabel",
+        background=colors['bg'],
+        foreground=colors['text'],
+        font=("Segoe UI", 10)
+    )
+
+    style.configure(
+        "Header.TLabel",
+        background=colors['bg'],
+        foreground=colors['text'],
+        font=("Segoe UI", 16, "bold"),
+        padding=(0, 10)
+    )
+
+    # Configure canvas for server list
+    style.configure(
+        "ServerList.TFrame",
+        background=colors['bg'],
+        relief="solid",
+        borderwidth=1
+    )
