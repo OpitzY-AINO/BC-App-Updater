@@ -6,7 +6,31 @@ from ui.drag_drop import DragDropZone
 from ui.styles import apply_styles
 from utils.json_parser import parse_server_config
 from utils.powershell_manager import execute_powershell
+from utils.config_manager import ConfigurationManager
 import os
+
+def preprocess_json_text(json_text):
+    """
+    Preprocess JSON text to handle common formatting issues.
+
+    Args:
+        json_text (str): Raw JSON text
+
+    Returns:
+        str: Preprocessed JSON text
+    """
+    # Remove trailing commas before arrays and objects
+    processed_text = json_text.replace(",]", "]").replace(",}", "}")
+    processed_text = processed_text.replace(",\n]", "\n]").replace(",\n}", "\n}")
+
+    # Check if we have multiple objects without array brackets
+    stripped = processed_text.strip()
+    if stripped.count('{') > 1:  # Multiple objects detected
+        if not (stripped.startswith('[') and stripped.endswith(']')):
+            # Wrap in array brackets if not already wrapped
+            processed_text = f'[{processed_text}]'
+
+    return processed_text
 
 class BusinessCentralPublisher(TkinterDnD.Tk):
     def __init__(self):
@@ -18,11 +42,14 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         # Application state
         self.app_file_path = None
-        self.server_configs = []
+        self.config_manager = ConfigurationManager()
 
         # Apply styles first
         apply_styles(self)
         self.setup_ui()
+
+        # Load saved configurations
+        self.update_server_list()
 
     def setup_ui(self):
         # Main container with padding
@@ -189,9 +216,10 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
     def process_config(self, config_data):
         try:
-            self.server_configs = parse_server_config(config_data)
+            new_configs = parse_server_config(config_data)
+            self.config_manager.add_configurations(new_configs)
             self.update_server_list()
-            self.config_drop_zone.update_text(f"Loaded {len(self.server_configs)} server configurations")
+            self.config_drop_zone.update_text(f"Loaded {len(new_configs)} server configurations")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to process configuration: {str(e)}")
 
@@ -200,8 +228,8 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         for item in self.server_tree.get_children():
             self.server_tree.delete(item)
 
-        # Add new items
-        for i, config in enumerate(self.server_configs):
+        # Add items from configuration manager
+        for i, config in enumerate(self.config_manager.get_configurations()):
             env_type = config['environmentType']
             name = config['name']
 
@@ -222,7 +250,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
     def clear_all(self):
         """Clear both the text area and server configurations"""
         self.config_text.delete("1.0", tk.END)
-        self.server_configs = []
+        self.config_manager.clear_configurations()
         self.update_server_list()
         self.config_drop_zone.update_text("Drop server config JSON here\nor click to browse")
 
@@ -238,14 +266,11 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             with open(file_path, 'r') as f:
                 config_text = f.read()
 
-                # Remove trailing commas before arrays and objects
-                config_text = config_text.replace(",]", "]")
-                config_text = config_text.replace(",}", "}")
-                config_text = config_text.replace(",\n]", "\n]")
-                config_text = config_text.replace(",\n}", "\n}")
+                # Preprocess the JSON text
+                processed_text = preprocess_json_text(config_text)
 
                 # Try to parse the configuration
-                config_data = json.loads(config_text)
+                config_data = json.loads(processed_text)
 
                 # Format and display the properly formatted JSON
                 formatted_json = json.dumps(config_data, indent=2)
@@ -270,8 +295,11 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
                 messagebox.showerror("Error", "Please enter configuration JSON")
                 return
 
+            # Preprocess the JSON text
+            processed_text = preprocess_json_text(config_text)
+
             # Try to parse and format JSON
-            config_data = json.loads(config_text)
+            config_data = json.loads(processed_text)
 
             # Format and display the properly formatted JSON
             formatted_json = json.dumps(config_data, indent=2)
@@ -300,10 +328,11 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         # Map selected items back to configurations
         selected_configs = []
+        all_configs = self.config_manager.get_configurations()
         for item in selected_items:
             index = int(item.split('_')[1])
-            if 0 <= index < len(self.server_configs):
-                selected_configs.append(self.server_configs[index])
+            if 0 <= index < len(all_configs):
+                selected_configs.append(all_configs[index])
 
         try:
             for config in selected_configs:

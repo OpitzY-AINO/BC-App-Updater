@@ -3,7 +3,7 @@ def parse_server_config(config_data):
     Parse the server configuration JSON data.
 
     Args:
-        config_data (dict): Raw JSON configuration data
+        config_data (dict or list): Raw JSON configuration data
 
     Returns:
         list: List of server configurations
@@ -11,15 +11,19 @@ def parse_server_config(config_data):
     Raises:
         ValueError: If the configuration format is invalid
     """
-    if not isinstance(config_data, dict):
-        raise ValueError("Configuration must be a JSON object")
+    # Handle list input (multiple configs)
+    if isinstance(config_data, list):
+        return [parse_single_config(config, i) for i, config in enumerate(config_data, 1)]
 
-    # Try to parse as a single configuration first
+    # Handle dict input
+    if not isinstance(config_data, dict):
+        raise ValueError("Configuration must be a JSON object or array")
+
+    # If it's a single configuration (has required fields)
     if all(key in config_data for key in ['name', 'environmentType']):
         return [parse_single_config(config_data)]
 
     # Otherwise, parse as full configuration format
-    # Check for version field
     version = config_data.get('version')
     if not version:
         raise ValueError("Missing 'version' field in configuration")
@@ -34,8 +38,7 @@ def parse_server_config(config_data):
     return [parse_single_config(config, i) for i, config in enumerate(configs, 1)]
 
 def parse_single_config(config, index=1):
-    """
-    Parse a single server configuration.
+    """Parse a single server configuration.
 
     Args:
         config (dict): Single server configuration
