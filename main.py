@@ -404,7 +404,6 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         editor.configure(yscrollcommand=scrollbar.set)
 
-
         # Layout
         editor.grid(row=0, column=0, sticky="nsew")
         scrollbar.grid(row=0, column=1, sticky="ns")
@@ -412,6 +411,15 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         # Button frame
         button_frame = ttk.Frame(editor_frame, style="TFrame")
         button_frame.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(20, 0))
+
+        # Load Current button
+        load_btn = ttk.Button(
+            button_frame,
+            text=get_text('load_current'),
+            style="Accent.TButton",
+            command=lambda: self.load_current_configs(editor)
+        )
+        load_btn.pack(side=tk.LEFT)
 
         # Close button
         close_btn = ttk.Button(
@@ -453,6 +461,21 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
                 "Error",
                 get_text('json_format_error', error=str(e), line=e.lineno, col=e.colno)
             )
+
+    def load_current_configs(self, editor):
+        """Load current configurations into the editor"""
+        current_configs = self.config_manager.get_configurations()
+        if current_configs:
+            # Convert to proper JSON format
+            json_text = json.dumps(
+                {"version": "0.4.0", "configurations": current_configs},
+                indent=2
+            )
+            # Clear current content and insert new
+            editor.delete("1.0", tk.END)
+            editor.insert("1.0", json_text)
+        else:
+            messagebox.showinfo("Info", get_text('no_configs'))
 
 def preprocess_json_text(json_text):
     """
