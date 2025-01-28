@@ -35,13 +35,13 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
     def setup_ui(self):
         """Set up the user interface with grid layout"""
-        # Main container with padding
-        main_frame = ttk.Frame(self, padding="20", style="TFrame")
+        # Main container with increased padding
+        main_frame = ttk.Frame(self, padding="30", style="TFrame")
         main_frame.grid(row=0, column=0, sticky="nsew")
 
         # Configure grid weights for main_frame
-        main_frame.grid_columnconfigure(0, weight=1)  # Left half
-        main_frame.grid_columnconfigure(1, weight=1)  # Right half
+        main_frame.grid_rowconfigure(3, weight=3)  # Server list row
+        main_frame.grid_columnconfigure(0, weight=1)
 
         # Header
         header = ttk.Label(
@@ -49,21 +49,11 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             text=get_text('app_title'),
             style="Header.TLabel"
         )
-        header.grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 20))
+        header.grid(row=0, column=0, sticky="ew", pady=(0, 20))
 
-        # Container frames for dropzones and editor
-        container_frame = ttk.Frame(main_frame, style="TFrame")
-        container_frame.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(0, 20))
-        container_frame.grid_columnconfigure(0, weight=1)
-        container_frame.grid_columnconfigure(1, weight=1)
-
-        # Left side container for both dropzones
-        left_frame = ttk.Frame(container_frame, style="TFrame")
-        left_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
-
-        # Extension File Section
-        app_frame = ttk.LabelFrame(left_frame, text=get_text('extension_file'), padding="10", style="TLabelframe")
-        app_frame.pack(fill=tk.X, pady=(0, 20))
+        # Extension File Section with reduced padding
+        app_frame = ttk.LabelFrame(main_frame, text=get_text('extension_file'), padding="10", style="TLabelframe")
+        app_frame.grid(row=1, column=0, sticky="ew", pady=(0, 10))
 
         self.app_drop_zone = DragDropZone(
             app_frame,
@@ -71,27 +61,58 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             self.handle_app_drop,
             ['.app']
         )
-        self.app_drop_zone.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        self.app_drop_zone.pack(fill=tk.X, padx=5, pady=5)
 
-        # Server Configuration Section
-        config_frame = ttk.LabelFrame(left_frame, text=get_text('server_config'), padding="10", style="TLabelframe")
-        config_frame.pack(fill=tk.X)
+        # Server Configuration Section with reduced padding
+        config_frame = ttk.LabelFrame(main_frame, text=get_text('server_config'), padding="10", style="TLabelframe")
+        config_frame.grid(row=2, column=0, sticky="ew", pady=(0, 10))
+
+        # Inner frame for drop zone and text area
+        config_inner = ttk.Frame(config_frame, style="TFrame")
+        config_inner.pack(fill=tk.X, expand=True)
+
+        # Left side: Drop zone
+        drop_frame = ttk.Frame(config_inner, style="TFrame")
+        drop_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 5))
 
         self.config_drop_zone = DragDropZone(
-            config_frame,
+            drop_frame,
             get_text('drop_json'),
             self.handle_config_drop,
             ['.json']
         )
-        self.config_drop_zone.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        self.config_drop_zone.pack(fill=tk.BOTH, expand=True)
 
-        # Right side: Text editor
-        editor_frame = ttk.Frame(container_frame, style="TFrame")
-        editor_frame.grid(row=0, column=1, sticky="nsew")
+        # Right side: Text input and buttons
+        text_frame = ttk.Frame(config_inner, style="TFrame")
+        text_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0))
 
-        # Text area with scrollbar
+        # Button container with reduced padding
+        button_frame = ttk.Frame(text_frame, style="TFrame")
+        button_frame.pack(fill=tk.X, pady=(0, 5))
+
+        # Clear and Parse buttons
+        clear_btn = ttk.Button(
+            button_frame,
+            text=get_text('clear'),
+            command=self.clear_all,
+            style="Accent.TButton"
+        )
+        clear_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 2))
+
+        parse_btn = ttk.Button(
+            button_frame,
+            text=get_text('parse_config'),
+            command=self.parse_text_config,
+            style="Accent.TButton"
+        )
+        parse_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(2, 0))
+
+        # Text area with reduced height
         self.config_text = tk.Text(
-            editor_frame,
+            text_frame,
+            height=6,
+            width=40,
             font=("Consolas", 10),
             relief="flat",
             borderwidth=0,
@@ -99,12 +120,11 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             bg='#181825',
             fg='#cdd6f4',
             padx=10,
-            pady=10,
-            height=15  # Set a fixed height
+            pady=10
         )
 
         text_scrollbar = ttk.Scrollbar(
-            editor_frame,
+            text_frame,
             orient="vertical",
             command=self.config_text.yview,
             style="TScrollbar"
@@ -114,48 +134,31 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.config_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         text_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        # Button container
-        button_frame = ttk.Frame(main_frame, style="TFrame")
-        button_frame.grid(row=2, column=0, columnspan=2, sticky="ew", pady=20)
-        button_frame.grid_columnconfigure(0, weight=1)
-
-        # Clear and Parse buttons centered
-        button_container = ttk.Frame(button_frame, style="TFrame")
-        button_container.grid(row=0, column=0)
-
-        clear_btn = ttk.Button(
-            button_container,
-            text=get_text('clear'),
-            command=self.clear_all,
-            style="Accent.TButton",
-            width=20
-        )
-        clear_btn.pack(side=tk.LEFT, padx=5)
-
-        parse_btn = ttk.Button(
-            button_container,
-            text=get_text('parse_config'),
-            command=self.parse_text_config,
-            style="Accent.TButton",
-            width=20
-        )
-        parse_btn.pack(side=tk.LEFT, padx=5)
-
-        # Server List Section
+        # Server List Section with increased size
         list_frame = ttk.LabelFrame(main_frame, text=get_text('server_configs'), padding="10", style="TLabelframe")
-        list_frame.grid(row=3, column=0, columnspan=2, sticky="nsew", pady=(0, 20))
-        list_container = ttk.Frame(list_frame, style="TFrame")
-        list_container.pack(fill=tk.BOTH, expand=True)
+        list_frame.grid(row=3, column=0, sticky="nsew", pady=(0, 10))
 
-        # Configure the Treeview
+        # Configure grid weights to give more space to the server list
+        main_frame.grid_rowconfigure(3, weight=3)  # Increased weight for server list
+        list_frame.grid_rowconfigure(0, weight=1)
+        list_frame.grid_columnconfigure(0, weight=1)
+
+        # Server list with scrollbar
+        list_container = ttk.Frame(list_frame, style="TFrame")
+        list_container.grid(row=0, column=0, sticky="nsew")
+        list_container.grid_rowconfigure(0, weight=1)
+        list_container.grid_columnconfigure(0, weight=1)
+
+        # Set minimum height for the Treeview
         self.server_tree = ttk.Treeview(
             list_container,
             columns=("selected", "type", "name", "environment"),
             show="headings",
             style="ServerList.Treeview",
-            height=10
+            height=10  # Set minimum number of visible items
         )
 
+        # Configure columns with translated headers
         self.server_tree.heading("selected", text=get_text('col_select'))
         self.server_tree.heading("type", text=get_text('col_type'))
         self.server_tree.heading("name", text=get_text('col_name'))
@@ -174,17 +177,17 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
 
         self.server_tree.configure(yscrollcommand=tree_scrollbar.set)
-        self.server_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        tree_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.server_tree.grid(row=0, column=0, sticky="nsew")
+        tree_scrollbar.grid(row=0, column=1, sticky="ns")
 
         self.server_tree.bind('<Button-1>', self.handle_server_click)
 
-        # Publish Button
-        publish_frame = ttk.Frame(main_frame, style="TFrame")
-        publish_frame.grid(row=4, column=0, columnspan=2, sticky="ew")
+        # Publish Button Section
+        button_container = ttk.Frame(main_frame, style="TFrame")
+        button_container.grid(row=4, column=0, sticky="ew", pady=(0, 10))
 
         self.publish_button = ttk.Button(
-            publish_frame,
+            button_container,
             text=get_text('publish_button'),
             command=self.publish_extension,
             style="Accent.TButton"
@@ -390,6 +393,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             messagebox.showerror("Error", error_msg)
         except Exception as e:
             messagebox.showerror("Error", f"Failed to parse configuration: {str(e)}")
+
 
     def show_text_menu(self, event):
         """Show the right-click menu for the text area"""
