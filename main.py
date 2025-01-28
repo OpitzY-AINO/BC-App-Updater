@@ -5,7 +5,7 @@ import json
 from ui.drag_drop import DragDropZone
 from ui.styles import apply_styles
 from utils.json_parser import parse_server_config
-from utils.powershell_manager import execute_powershell, publish_to_environment
+from utils.powershell_manager import execute_powershell, publish_to_environment, test_server_connection
 from utils.config_manager import ConfigurationManager
 from utils.translations import get_text
 import os
@@ -155,6 +155,18 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         tree_scrollbar.grid(row=0, column=1, sticky="ns")
 
         self.server_tree.bind('<Button-1>', self.handle_server_click)
+
+        # Add Test Connection button next to the server list
+        button_container = ttk.Frame(list_frame, style="TFrame")
+        button_container.grid(row=1, column=0, sticky="ew", pady=(10, 0))
+
+        test_connection_btn = ttk.Button(
+            button_container,
+            text=get_text('test_connection'),
+            command=self.test_selected_connections,
+            style="Accent.TButton"
+        )
+        test_connection_btn.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
         # Publish Button Section
         button_container = ttk.Frame(main_frame, style="TFrame")
@@ -308,6 +320,19 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
                 new_values[0] = "☑" if current_values[0] == "☐" else "☐"
                 self.server_tree.item(item, values=new_values)
 
+                # Update publish button state
+                self.update_publish_button_state()
+
+    def update_publish_button_state(self):
+        """Update publish button state based on selections"""
+        has_selection = False
+        for item in self.server_tree.get_children():
+            if self.server_tree.item(item)['values'][0] == "☑":
+                has_selection = True
+                break
+
+        self.publish_button.configure(state="normal" if has_selection else "disabled")
+
     def process_config(self, config_data):
         try:
             new_configs = parse_server_config(config_data)
@@ -341,6 +366,9 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
                 f"server_{i}",
                 values=("☐", env_type, name, environment)
             )
+
+        # Update publish button state after loading list
+        self.update_publish_button_state()
 
     def handle_config_drop(self, file_path):
         """Handle dropping a configuration file"""
@@ -491,6 +519,93 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             editor.insert("1.0", json_text)
         else:
             messagebox.showinfo("Info", get_text('no_configs'))
+
+    def test_selected_connections(self):
+        """Test connection to selected servers"""
+        selected_items = self.server_tree.get_children()
+        selected_configs = []
+        for item in selected_items:
+            values = self.server_tree.item(item)['values']
+            if values[0] == "☑":
+                index = int(item.split('_')[1])
+                if 0 <= index < len(self.config_manager.get_configurations()):
+                    selected_configs.append(self.config_manager.get_configurations()[index])
+
+        if not selected_configs:
+            messagebox.showerror("Error", get_text('select_server_test'))
+            return
+
+        # Create progress dialog
+        progress_window = tk.Toplevel(self)
+        progress_window.title(get_text('connection_test_progress'))
+        progress_window.geometry("400x300")
+        progress_window.transient(self)
+        progress_window.grab_set()
+
+        # Configure progress window
+        progress_frame = ttk.Frame(progress_window, padding="20", style="Card.TFrame")
+        progress_frame.pack(fill=tk.BOTH, expand=True)
+
+        # Add text widget for progress
+        progress_text = scrolledtext.ScrolledText(
+            progress_frame,
+            height=10,
+            font=("Consolas", 10),
+            bg='#181825',
+            fg='#cdd6f4',
+            relief="flat",
+            borderwidth=0,
+            highlightthickness=0,
+            padx=10,
+            pady=10
+        )
+        progress_text.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
+
+        # Add close button
+        close_btn = ttk.Button(
+            progress_frame,
+            text=get_text('close'),
+            command=progress_window.destroy,
+            style="Accent.TButton"
+        )
+        close_btn.pack(fill=tk.X)
+
+        # Update progress text
+        def update_progress(message):
+            progress_text.insert(tk.END, f"{message}\n")
+            progress_text.see(tk.END)
+            progress_text.update()
+
+        # Test connection to each selected server
+        test_results = []
+        for config in selected_configs:
+            update_progress(get_text('testing_connection', server=config['name']))
+            success, message = test_server_connection(config)
+            test_results.append((config['name'], success, message))
+
+            # Update progress with result
+            status = "✓" if success else "✗"
+            update_progress(f"{status} {message}")
+
+        # Show final summary
+        update_progress(f"\n{get_text('test_summary')}")
+        successful = sum(1 for _, success, _ in test_results if success)
+        failed = len(test_results) - successful
+        update_progress(get_text('successful', count=successful))
+        update_progress(get_text('failed', count=failed))
+
+        # Show error message if any tests failed
+        if failed > 0:
+            messagebox.showerror(
+                get_text('test_complete'),
+                get_text('test_complete_with_errors', count=failed)
+            )
+        else:
+            messagebox.showinfo(
+                get_text('test_complete'),
+                get_text('all_tests_successful')
+            )
+
 
 def preprocess_json_text(json_text):
     """

@@ -95,8 +95,14 @@ def apply_styles(root):
 
     style.map(
         "Accent.TButton",
-        background=[("active", colors['accent'])],
-        foreground=[("active", colors['bg_dark'])]
+        background=[
+            ("active", colors['accent']),
+            ("disabled", colors['bg_darker'])  # Darker grey when disabled
+        ],
+        foreground=[
+            ("active", colors['bg_dark']),
+            ("disabled", colors['text_secondary'])  # Secondary text color when disabled
+        ]
     )
 
     # Configure checkbox styles
