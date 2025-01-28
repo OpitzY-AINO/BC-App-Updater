@@ -136,8 +136,9 @@ def apply_styles(root):
         foreground=colors['text'],
         fieldbackground=colors['bg_darker'],
         borderwidth=0,
-        font=("Segoe UI", 10),
-        rowheight=30
+        font=("Segoe UI", 12),  # Further increased font size
+        rowheight=50,           # Increased row height more
+        padding=(15, 8)         # Increased padding
     )
 
     style.configure(
@@ -146,19 +147,7 @@ def apply_styles(root):
         foreground=colors['text'],
         relief="flat",
         borderwidth=0,
-        font=("Segoe UI", 10, "bold")
-    )
-
-    style.map(
-        "ServerList.Treeview",
-        background=[
-            ("selected", colors['hover']),
-            ("!selected", colors['bg_darker'])
-        ],
-        foreground=[
-            ("selected", colors['primary']),
-            ("!selected", colors['text'])
-        ]
+        font=("Segoe UI", 12, "bold")  # Increased font size to match
     )
 
     # Configure Canvas background for server list
