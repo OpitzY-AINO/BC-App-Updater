@@ -40,9 +40,9 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         main_frame.grid(row=0, column=0, sticky="nsew")
 
         # Configure grid weights for main_frame
-        main_frame.grid_rowconfigure(3, weight=3)  # Server list row
-        main_frame.grid_columnconfigure(0, weight=1)
-        main_frame.grid_columnconfigure(1, weight=1)
+        main_frame.grid_rowconfigure(2, weight=3)  # Server list row gets more space
+        main_frame.grid_columnconfigure(0, weight=1)  # Left half
+        main_frame.grid_columnconfigure(1, weight=1)  # Right half
 
         # Header
         header = ttk.Label(
@@ -68,12 +68,8 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         config_frame = ttk.LabelFrame(main_frame, text=get_text('server_config'), padding="10", style="TLabelframe")
         config_frame.grid(row=1, column=1, sticky="nsew")
 
-        # Config content container
-        config_content = ttk.Frame(config_frame, style="TFrame")
-        config_content.pack(fill=tk.BOTH, expand=True)
-
         # Drop zone and text editor side by side
-        config_inner = ttk.Frame(config_content, style="TFrame")
+        config_inner = ttk.Frame(config_frame, style="TFrame")
         config_inner.pack(fill=tk.BOTH, expand=True)
 
         # Left side: Drop zone
@@ -146,12 +142,6 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         list_frame = ttk.LabelFrame(main_frame, text=get_text('server_configs'), padding="10", style="TLabelframe")
         list_frame.grid(row=2, column=0, columnspan=2, sticky="nsew", pady=(10, 10))
 
-        # Configure grid weights to give more space to the server list
-        main_frame.grid_rowconfigure(2, weight=3)  # Increased weight for server list
-        list_frame.grid_rowconfigure(0, weight=1)
-        list_frame.grid_columnconfigure(0, weight=1)
-
-        # Server list with scrollbar
         list_container = ttk.Frame(list_frame, style="TFrame")
         list_container.grid(row=0, column=0, sticky="nsew")
         list_container.grid_rowconfigure(0, weight=1)
