@@ -203,17 +203,16 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         # Create a separate frame for the publish button to ensure proper spacing
         button_container = ttk.Frame(main_frame, style="TFrame")
-        button_container.pack(fill=tk.X, pady=(0, 20))
+        button_container.pack(fill=tk.X)  # Removed pady to reduce spacing
 
         # Publish button with accent styling
         self.publish_button = ttk.Button(
             button_container,
             text="Publish to Selected Servers",
             command=self.publish_extension,
-            style="Accent.TButton",
-            padding=(20, 10)  # Add padding to make button more visible
+            style="Accent.TButton"
         )
-        self.publish_button.pack(fill=tk.X, padx=20, pady=10)  # Add padding around the button
+        self.publish_button.pack(fill=tk.X, padx=5, pady=5)  # Adjusted padding
 
 
     def handle_server_click(self, event):
