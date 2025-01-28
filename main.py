@@ -121,18 +121,29 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.servers_canvas = tk.Canvas(
             self.server_list,
             highlightthickness=0,
-            bd=0
+            bd=0,
+            background='#181825'  # Match bg_darker color
         )
         scrollbar = ttk.Scrollbar(self.server_list, orient="vertical", command=self.servers_canvas.yview)
 
         self.servers_frame = ttk.Frame(self.servers_canvas, style="ServerList.TFrame")
 
+        # Configure canvas scrolling
         self.servers_frame.bind(
             '<Configure>',
             lambda e: self.servers_canvas.configure(scrollregion=self.servers_canvas.bbox("all"))
         )
 
-        self.servers_canvas.create_window((0, 0), window=self.servers_frame, anchor="nw", width=self.servers_canvas.winfo_width())
+        # Ensure the canvas window spans the full width
+        self.servers_canvas.bind('<Configure>', lambda e: self.servers_canvas.itemconfig(
+            self.canvas_window, width=e.width))
+
+        # Create the canvas window with proper width
+        self.canvas_window = self.servers_canvas.create_window(
+            (0, 0),
+            window=self.servers_frame,
+            anchor="nw"
+        )
 
         # Configure the canvas to expand with the window
         self.servers_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
