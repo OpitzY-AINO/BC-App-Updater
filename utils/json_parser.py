@@ -19,23 +19,19 @@ def parse_server_config(config_data):
     if not isinstance(config_data, dict):
         raise ValueError("Configuration must be a JSON object or array")
 
-    # If it's a single configuration (has required fields)
-    if all(key in config_data for key in ['name', 'environmentType']):
+    # Check if this is a full configuration file format
+    if 'version' in config_data and 'configurations' in config_data:
+        configs = config_data['configurations']
+        if not isinstance(configs, list):
+            raise ValueError("'configurations' must be a list of server configurations")
+        return [parse_single_config(config, i) for i, config in enumerate(configs, 1)]
+
+    # If it's a single configuration (has name and type fields)
+    if 'name' in config_data and 'environmentType' in config_data:
         return [parse_single_config(config_data)]
 
-    # Otherwise, parse as full configuration format
-    version = config_data.get('version')
-    if not version:
-        raise ValueError("Missing 'version' field in configuration")
-
-    if 'configurations' not in config_data:
-        raise ValueError("Missing 'configurations' field in configuration")
-
-    configs = config_data['configurations']
-    if not isinstance(configs, list):
-        raise ValueError("'configurations' must be a list of server configurations")
-
-    return [parse_single_config(config, i) for i, config in enumerate(configs, 1)]
+    raise ValueError("Invalid configuration format. Expected either a single configuration, "
+                    "multiple configurations in an array, or a full configuration file format.")
 
 def parse_single_config(config, index=1):
     """Parse a single server configuration.
