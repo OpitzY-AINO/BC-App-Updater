@@ -91,7 +91,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         button_frame = ttk.Frame(text_frame, style="TFrame")
         button_frame.pack(fill=tk.X, pady=(0, 5))
 
-        # Clear and Parse buttons
+        # Clear, Editor, and Parse buttons
         clear_btn = ttk.Button(
             button_frame,
             text=get_text('clear'),
@@ -100,6 +100,14 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         clear_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 2))
 
+        editor_btn = ttk.Button(
+            button_frame,
+            text=get_text('open_editor'),
+            command=self.open_editor_popup,
+            style="Accent.TButton"
+        )
+        editor_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=2)
+
         parse_btn = ttk.Button(
             button_frame,
             text=get_text('parse_config'),
@@ -107,6 +115,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             style="Accent.TButton"
         )
         parse_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(2, 0))
+
 
         # Text area with reduced height
         self.config_text = tk.Text(
@@ -449,6 +458,96 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         except Exception as e:
             messagebox.showerror("Error", get_text('invalid_json'))
 
+    def open_editor_popup(self):
+        """Open a popup window with a larger text editor"""
+        popup = tk.Toplevel(self)
+        popup.title(get_text('config_editor'))
+        popup.geometry("800x600")
+        popup.minsize(600, 400)
+        popup.transient(self)
+
+        # Configure popup grid
+        popup.grid_rowconfigure(0, weight=1)
+        popup.grid_columnconfigure(0, weight=1)
+
+        # Create main frame with padding
+        editor_frame = ttk.Frame(popup, style="Card.TFrame", padding="20")
+        editor_frame.grid(row=0, column=0, sticky="nsew")
+        editor_frame.grid_rowconfigure(0, weight=1)
+        editor_frame.grid_columnconfigure(0, weight=1)
+
+        # Create text widget with syntax highlighting
+        editor = tk.Text(
+            editor_frame,
+            font=("Consolas", 12),
+            relief="flat",
+            borderwidth=0,
+            highlightthickness=0,
+            bg='#181825',
+            fg='#cdd6f4',
+            padx=10,
+            pady=10
+        )
+
+        # Create scrollbar
+        scrollbar = ttk.Scrollbar(
+            editor_frame,
+            orient="vertical",
+            command=editor.yview,
+            style="TScrollbar"
+        )
+
+        editor.configure(yscrollcommand=scrollbar.set)
+
+        # Add current content to editor
+        current_text = self.config_text.get("1.0", tk.END)
+        editor.insert("1.0", current_text)
+
+        # Layout
+        editor.grid(row=0, column=0, sticky="nsew")
+        scrollbar.grid(row=0, column=1, sticky="ns")
+
+        # Button frame
+        button_frame = ttk.Frame(editor_frame, style="TFrame")
+        button_frame.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(20, 0))
+
+        # Apply button
+        apply_btn = ttk.Button(
+            button_frame,
+            text=get_text('apply_changes'),
+            style="Accent.TButton",
+            command=lambda: self.apply_editor_changes(editor.get("1.0", tk.END), popup)
+        )
+        apply_btn.pack(side=tk.RIGHT)
+
+        # Focus the editor
+        editor.focus_set()
+
+        # Make the popup modal
+        popup.grab_set()
+
+    def apply_editor_changes(self, new_text, popup):
+        """Apply changes from popup editor to main window"""
+        try:
+            # Validate JSON before applying
+            if new_text.strip():
+                json.loads(new_text)
+
+            # Update main window text
+            self.config_text.delete("1.0", tk.END)
+            self.config_text.insert("1.0", new_text)
+
+            # Try to parse configuration
+            self.parse_text_config()
+
+            # Close popup
+            popup.destroy()
+
+        except json.JSONDecodeError as e:
+            messagebox.showerror(
+                "Error",
+                get_text('json_format_error', error=str(e), line=e.lineno, col=e.colno)
+            )
 
 def preprocess_json_text(json_text):
     """

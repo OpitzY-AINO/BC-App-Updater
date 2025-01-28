@@ -10,6 +10,9 @@ TRANSLATIONS = {
     'parse_config': 'Konfiguration Parsen',
     'server_configs': 'Server-Konfigurationen',
     'publish_button': 'Auf ausgewählte Server veröffentlichen',
+    'config_editor': 'Konfigurationseditor',
+    'apply_changes': 'Änderungen übernehmen',
+    'open_editor': 'Editor öffnen',
 
     # Column headers
     'col_select': 'Auswahl',
