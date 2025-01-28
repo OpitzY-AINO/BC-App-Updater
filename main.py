@@ -47,6 +47,14 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         # Load saved configurations
         self.update_server_list()
 
+    def center_window(self, window, width=800, height=600):
+        """Center any window on the screen"""
+        screen_width = window.winfo_screenwidth()
+        screen_height = window.winfo_screenheight()
+        center_x = int((screen_width - width) / 2)
+        center_y = int((screen_height - height) / 2)
+        window.geometry(f"{width}x{height}+{center_x}+{center_y}")
+
     def setup_ui(self):
         """Set up the user interface with grid layout"""
         # Main container with increased padding
@@ -230,9 +238,11 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             # Create progress dialog
             progress_window = tk.Toplevel(self)
             progress_window.title(get_text('deployment_progress'))
-            progress_window.geometry("400x300")
             progress_window.transient(self)
-            progress_window.grab_set()
+            progress_window.grab_set() # Make modal
+
+            # Center the progress window
+            self.center_window(progress_window, width=400, height=300)
 
             # Configure progress window
             progress_frame = ttk.Frame(progress_window, padding="20", style="Card.TFrame")
@@ -390,6 +400,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         # Update publish button state after loading list
         self.update_publish_button_state()
 
+
     def handle_config_drop(self, file_path):
         """Handle dropping a configuration file"""
         try:
@@ -415,18 +426,11 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         """Open a popup window with a larger text editor"""
         popup = tk.Toplevel(self)
         popup.title(get_text('config_editor'))
-        popup.geometry("800x600")
         popup.minsize(600, 400)
         popup.transient(self)
 
-        # Center the popup window on the screen
-        window_width = 800
-        window_height = 600
-        screen_width = popup.winfo_screenwidth()
-        screen_height = popup.winfo_screenheight()
-        center_x = int((screen_width - window_width) / 2)
-        center_y = int((screen_height - window_height) / 2)
-        popup.geometry(f"{window_width}x{window_height}+{center_x}+{center_y}")
+        # Center the popup window
+        self.center_window(popup, width=800, height=600)
 
         # Configure popup grid
         popup.grid_rowconfigure(0, weight=1)
@@ -492,7 +496,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             style="Accent.TButton",
             command=popup.destroy
         )
-        close_btn.grid(row=0, column=2, sticky="e", padx=(10, 0))  # Added padx for spacing
+        close_btn.grid(row=0, column=2, sticky="e", padx=(20, 0))  # Increased padding between buttons
 
         # Configure button frame grid
         button_frame.grid_columnconfigure(1, weight=1)
@@ -565,9 +569,10 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         # Create progress dialog
         progress_window = tk.Toplevel(self)
         progress_window.title(get_text('connection_test_progress'))
-        progress_window.geometry("400x300")
         progress_window.transient(self)
-        progress_window.grab_set()
+
+        # Center the progress window
+        self.center_window(progress_window, width=400, height=300)
 
         # Configure progress window
         progress_frame = ttk.Frame(progress_window, padding="20", style="Card.TFrame")
@@ -594,6 +599,9 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             style="Accent.TButton"
         )
         close_btn.pack(fill=tk.X)
+
+        # Make the window modal
+        progress_window.grab_set()
 
         # Update progress text
         def update_progress(message):
@@ -630,6 +638,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
                 get_text('test_complete'),
                 get_text('all_tests_successful')
             )
+
 
 
 def preprocess_json_text(json_text):
