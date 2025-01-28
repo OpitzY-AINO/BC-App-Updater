@@ -107,6 +107,11 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             relief="solid",
             borderwidth=1
         )
+
+        # Apply modern scrollbar style to the Text widget
+        text_scrollbar = self.config_text.vbar
+        text_scrollbar.configure(style="TScrollbar")
+
         self.config_text.pack(fill=tk.BOTH, expand=True)
 
         # Server list section
@@ -145,9 +150,12 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         # Add mouse wheel scrolling
         def _on_mousewheel(event):
-            self.servers_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+            # Only scroll if mouse is over the canvas
+            if str(event.widget) == str(self.servers_canvas):
+                self.servers_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
 
-        self.servers_canvas.bind_all("<MouseWheel>", _on_mousewheel)
+        # Bind mouse wheel to canvas specifically
+        self.servers_canvas.bind("<MouseWheel>", _on_mousewheel)
 
         # Create the canvas window with proper width
         self.canvas_window = self.servers_canvas.create_window(
