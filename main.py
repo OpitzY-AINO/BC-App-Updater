@@ -59,7 +59,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         # Extension File Section
         app_frame = ttk.LabelFrame(left_frame, text=get_text('extension_file'), padding="10", style="TLabelframe")
-        app_frame.pack(fill=tk.X, pady=(0, 10))  # Increased bottom padding
+        app_frame.pack(fill=tk.X, pady=(0, 20))  # Increased bottom padding
 
         self.app_drop_zone = DragDropZone(
             app_frame,
@@ -81,16 +81,9 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         self.config_drop_zone.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        # Calculate total height of dropzones
-        app_frame.update_idletasks()
-        config_frame.update_idletasks()
-        total_height = app_frame.winfo_reqheight() + config_frame.winfo_reqheight()
-
         # Right side: Text editor with matching height
         editor_frame = ttk.Frame(main_frame, style="TFrame")
         editor_frame.grid(row=1, column=1, sticky="nsew")
-        editor_frame.grid_propagate(False)  # Prevent frame from resizing
-        editor_frame.configure(height=total_height)  # Match height with left frame
 
         # Text area with scrollbar
         self.config_text = tk.Text(
@@ -115,6 +108,9 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.config_text.configure(yscrollcommand=text_scrollbar.set)
         self.config_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         text_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # After packing all elements, force both frames to the same height
+        self.after(100, lambda: self._adjust_frame_heights(left_frame, editor_frame))
 
         # Button container centered below dropzones and editor
         button_frame = ttk.Frame(main_frame, style="TFrame")
@@ -193,6 +189,20 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             style="Accent.TButton"
         )
         self.publish_button.pack(fill=tk.X)
+
+    def _adjust_frame_heights(self, left_frame, editor_frame):
+        """Adjust the heights of left_frame and editor_frame to match"""
+        left_frame.update_idletasks()
+        height = left_frame.winfo_reqheight()
+
+        # Prevent automatic resizing
+        left_frame.grid_propagate(False)
+        editor_frame.grid_propagate(False)
+
+        # Set both frames to the same height
+        left_frame.configure(height=height)
+        editor_frame.configure(height=height)
+
 
     def publish_extension(self):
         """Handle the publish button click event"""
@@ -393,7 +403,6 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             messagebox.showerror("Error", error_msg)
         except Exception as e:
             messagebox.showerror("Error", f"Failed to parse configuration: {str(e)}")
-
 
     def show_text_menu(self, event):
         """Show the right-click menu for the text area"""
