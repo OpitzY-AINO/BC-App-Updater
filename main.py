@@ -42,6 +42,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         # Configure grid weights for main_frame
         main_frame.grid_rowconfigure(3, weight=3)  # Server list row
         main_frame.grid_columnconfigure(0, weight=1)
+        main_frame.grid_rowconfigure(4, weight=0) #Added row for publish button
 
         # Header
         header = ttk.Label(
@@ -55,17 +56,22 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         app_frame = ttk.LabelFrame(main_frame, text=get_text('extension_file'), padding="10", style="TLabelframe")
         app_frame.grid(row=1, column=0, sticky="ew", pady=(0, 10))
 
+        # Create inner container for app drop zone
+        app_container = ttk.Frame(app_frame, style="TFrame")
+        app_container.pack(padx=5, pady=5)  # Changed from grid to pack
+
         self.app_drop_zone = DragDropZone(
-            app_frame,
+            app_container,
             get_text('drop_app'),
             self.handle_app_drop,
             ['.app']
         )
-        self.app_drop_zone.pack(fill=tk.X, padx=5, pady=5)
+        self.app_drop_zone.pack(fill=tk.X)  # Removed expand=True
 
-        # Server Configuration Section with reduced padding
+        # Server Configuration Section
         config_frame = ttk.LabelFrame(main_frame, text=get_text('server_config'), padding="10", style="TLabelframe")
         config_frame.grid(row=2, column=0, sticky="ew", pady=(0, 10))
+        config_frame.grid_columnconfigure(0, weight=1)
 
         # Inner frame for drop zone and text area
         config_inner = ttk.Frame(config_frame, style="TFrame")
@@ -83,7 +89,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         self.config_drop_zone.pack(fill=tk.BOTH, expand=True)
 
-        # Right side: buttons only
+        # Right side: buttons with standardized width
         button_frame = ttk.Frame(config_inner, style="TFrame")
         button_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0))
 
@@ -94,7 +100,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             command=self.clear_all,
             style="Accent.TButton"
         )
-        clear_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 2))
+        clear_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 2))  # Reverted to pack
 
         editor_btn = ttk.Button(
             button_frame,
@@ -102,7 +108,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             command=self.open_editor_popup,
             style="Accent.TButton"
         )
-        editor_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=2)
+        editor_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=2)  # Reverted to pack
 
 
         # Server List Section with increased size
@@ -113,6 +119,8 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         main_frame.grid_rowconfigure(3, weight=3)  # Increased weight for server list
         list_frame.grid_rowconfigure(0, weight=1)
         list_frame.grid_columnconfigure(0, weight=1)
+        list_frame.grid_rowconfigure(1, weight=0) #added row for test button
+
 
         # Server list with scrollbar
         list_container = ttk.Frame(list_frame, style="TFrame")
@@ -141,7 +149,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.server_tree.column("name", width=300, stretch=True, anchor="center")       # Increased width more
         self.server_tree.column("environment", width=400, stretch=True, anchor="center") # Increased width more
 
-        self.server_tree.pack(fill=tk.BOTH, expand=True)
+        self.server_tree.grid(row=0, column=0, sticky="nsew")
 
         tree_scrollbar = ttk.Scrollbar(
             list_container,
@@ -151,35 +159,36 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
 
         self.server_tree.configure(yscrollcommand=tree_scrollbar.set)
-        self.server_tree.grid(row=0, column=0, sticky="nsew")
         tree_scrollbar.grid(row=0, column=1, sticky="ns")
 
         self.server_tree.bind('<Button-1>', self.handle_server_click)
 
-        # Add Test Connection button next to the server list
-        button_container = ttk.Frame(list_frame, style="TFrame")
-        button_container.grid(row=1, column=0, sticky="ew", pady=(10, 0))
+        # Test Connection button container with standardized width
+        test_button_container = ttk.Frame(list_frame, style="TFrame", padding=(0, 10, 0, 0))
+        test_button_container.grid(row=1, column=0, sticky="ew", pady=(10, 0))
+        test_button_container.grid_columnconfigure(0, weight=1)
 
         self.test_connection_btn = ttk.Button(
-            button_container,
+            test_button_container,
             text=get_text('test_connection'),
             command=self.test_selected_connections,
-            state="disabled",  # Initially disabled
+            state="disabled",
             style="Accent.TButton"
         )
-        self.test_connection_btn.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        self.test_connection_btn.grid(row=0, column=0, sticky="ew")
 
-        # Publish Button Section
-        button_container = ttk.Frame(main_frame, style="TFrame")
-        button_container.grid(row=4, column=0, sticky="ew", pady=(0, 10))
+        # Publish Button Section with standardized width
+        publish_button_container = ttk.Frame(main_frame, style="TFrame")
+        publish_button_container.grid(row=4, column=0, sticky="ew", pady=(0, 10))
+        publish_button_container.grid_columnconfigure(0, weight=1)
 
         self.publish_button = ttk.Button(
-            button_container,
+            publish_button_container,
             text=get_text('publish_button'),
             command=self.publish_extension,
             style="Accent.TButton"
         )
-        self.publish_button.pack(fill=tk.X)
+        self.publish_button.grid(row=0, column=0, sticky="ew")
 
     def publish_extension(self):
         """Handle the publish button click event"""
@@ -608,6 +617,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
                 get_text('test_complete'),
                 get_text('all_tests_successful')
             )
+
 
 
 def preprocess_json_text(json_text):
