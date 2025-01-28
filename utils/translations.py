@@ -15,6 +15,8 @@ TRANSLATIONS = {
     'apply_changes': 'Änderungen übernehmen',
     'open_editor': 'Editor öffnen',
     'close': 'Schließen',
+    'load_current': 'Aktuelle Konfigurationen laden',
+    'no_configs': 'Keine Konfigurationen zum Laden vorhanden',
 
     # Column headers
     'col_select': 'Auswahl',
