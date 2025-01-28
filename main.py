@@ -245,17 +245,41 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             messagebox.showerror("Error", f"Failed to load configuration: {str(e)}")
 
     def process_config(self, config_data):
+        """Process the configuration data and update the UI"""
         try:
+            print("Processing configuration data...")
+            print(f"Raw config data: {json.dumps(config_data, indent=2)}")
+
             self.server_configs = parse_server_config(config_data)
+            print(f"Parsed {len(self.server_configs)} server configurations")
+            print(f"Parsed configs: {json.dumps(self.server_configs, indent=2)}")
+
+            # Update UI
             self.update_server_list()
-            self.config_drop_zone.update_text(f"Loaded {len(self.server_configs)} server configurations")
+
+            success_msg = f"Loaded {len(self.server_configs)} server configurations"
+            self.config_drop_zone.update_text(success_msg)
+            print(success_msg)
+
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to process configuration: {str(e)}")
+            error_msg = f"Failed to process configuration: {str(e)}"
+            print(f"Error: {error_msg}")
+            messagebox.showerror("Error", error_msg)
 
     def update_server_list(self):
+        """Update the server list display"""
         # Clear existing items
         for widget in self.servers_frame.winfo_children():
             widget.destroy()
+
+        # Configure canvas and frame styling
+        self.servers_canvas.configure(
+            bg=self.dark_colors['bg_lighter'],
+            highlightthickness=0
+        )
+        self.servers_frame.configure(style="ServerList.TFrame")
+
+        print(f"Updating server list with {len(self.server_configs)} configurations")
 
         # Add new items with modern styling
         for config in self.server_configs:
@@ -283,9 +307,14 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
             config['checkbox_var'] = var
 
+            print(f"Added server list item: {display_text}")
+
         # Update canvas scroll region
-        self.servers_canvas.update_idletasks()
+        self.servers_frame.update_idletasks()
         self.servers_canvas.configure(scrollregion=self.servers_canvas.bbox('all'))
+
+        # Ensure the changes are visible
+        self.servers_frame.update()
 
     def publish_extension(self):
         if not self.app_file_path:
