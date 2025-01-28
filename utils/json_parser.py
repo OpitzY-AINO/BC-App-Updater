@@ -21,7 +21,7 @@ def parse_server_config(config_data):
 
     # Check if this is a full configuration file format
     if 'version' in config_data and 'configurations' in config_data:
-        configs = config_data['configurations']
+        configs = config_data.get('configurations', [])
         if not isinstance(configs, list):
             raise ValueError("'configurations' must be a list of server configurations")
         return [parse_single_config(config, i) for i, config in enumerate(configs, 1)]
@@ -45,13 +45,13 @@ def parse_single_config(config, index=1):
     if not isinstance(config, dict):
         raise ValueError(f"Configuration {index} must be a JSON object")
 
-    # Extract name from config
-    if 'name' not in config:
-        raise ValueError(f"Configuration {index} is missing 'name' field")
-
     # Handle launch.json format (has type field)
     if 'type' in config:
-        # For launch.json format, environmentType might be in different cases
+        # For launch.json format, validate required fields
+        if 'name' not in config:
+            raise ValueError(f"Configuration {index} is missing 'name' field")
+
+        # Check environmentType with case-insensitive handling
         env_type = None
         if 'environmentType' in config:
             env_type = config['environmentType']
@@ -97,7 +97,10 @@ def parse_single_config(config, index=1):
         return parsed_config
 
     # Handle direct server configuration format
+    if 'name' not in config:
+        raise ValueError(f"Configuration {index} is missing 'name' field")
     if 'environmentType' not in config:
         raise ValueError(f"Configuration {index} ({config['name']}) is missing 'environmentType' field")
 
+    # Convert to launch.json format and reparse
     return parse_single_config({'type': 'al', **config}, index)
