@@ -40,7 +40,6 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         main_frame.grid(row=0, column=0, sticky="nsew")
 
         # Configure grid weights for main_frame
-        main_frame.grid_rowconfigure(2, weight=1)  # Server list row gets more space
         main_frame.grid_columnconfigure(0, weight=1)  # Left half
         main_frame.grid_columnconfigure(1, weight=1)  # Right half
 
@@ -50,16 +49,21 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             text=get_text('app_title'),
             style="Header.TLabel"
         )
-        header.grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 10))
+        header.grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 20))
+
+        # Container frames for dropzones and editor
+        container_frame = ttk.Frame(main_frame, style="TFrame")
+        container_frame.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(0, 20))
+        container_frame.grid_columnconfigure(0, weight=1)
+        container_frame.grid_columnconfigure(1, weight=1)
 
         # Left side container for both dropzones
-        left_frame = ttk.Frame(main_frame, style="TFrame")
-        left_frame.grid(row=1, column=0, sticky="nsew", padx=(0, 10))
-        left_frame.grid_columnconfigure(0, weight=1)  # Allow horizontal expansion
+        left_frame = ttk.Frame(container_frame, style="TFrame")
+        left_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
 
         # Extension File Section
         app_frame = ttk.LabelFrame(left_frame, text=get_text('extension_file'), padding="10", style="TLabelframe")
-        app_frame.pack(fill=tk.X, pady=(0, 20))  # Increased bottom padding
+        app_frame.pack(fill=tk.X, pady=(0, 20))
 
         self.app_drop_zone = DragDropZone(
             app_frame,
@@ -69,7 +73,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         self.app_drop_zone.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        # Server Configuration Dropzone
+        # Server Configuration Section
         config_frame = ttk.LabelFrame(left_frame, text=get_text('server_config'), padding="10", style="TLabelframe")
         config_frame.pack(fill=tk.X)
 
@@ -81,9 +85,9 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         self.config_drop_zone.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        # Right side: Text editor with matching height
-        editor_frame = ttk.Frame(main_frame, style="TFrame")
-        editor_frame.grid(row=1, column=1, sticky="nsew")
+        # Right side: Text editor
+        editor_frame = ttk.Frame(container_frame, style="TFrame")
+        editor_frame.grid(row=0, column=1, sticky="nsew")
 
         # Text area with scrollbar
         self.config_text = tk.Text(
@@ -95,7 +99,8 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             bg='#181825',
             fg='#cdd6f4',
             padx=10,
-            pady=10
+            pady=10,
+            height=15  # Set a fixed height
         )
 
         text_scrollbar = ttk.Scrollbar(
@@ -109,24 +114,21 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.config_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         text_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        # After packing all elements, force both frames to the same height
-        self.after(100, lambda: self._adjust_frame_heights(left_frame, editor_frame))
-
-        # Button container centered below dropzones and editor
+        # Button container
         button_frame = ttk.Frame(main_frame, style="TFrame")
-        button_frame.grid(row=2, column=0, columnspan=2, sticky="ew", pady=10)
-        button_frame.columnconfigure(0, weight=1)  # Center the buttons
+        button_frame.grid(row=2, column=0, columnspan=2, sticky="ew", pady=20)
+        button_frame.grid_columnconfigure(0, weight=1)
 
         # Clear and Parse buttons centered
         button_container = ttk.Frame(button_frame, style="TFrame")
-        button_container.pack(expand=True)
+        button_container.grid(row=0, column=0)
 
         clear_btn = ttk.Button(
             button_container,
             text=get_text('clear'),
             command=self.clear_all,
             style="Accent.TButton",
-            width=20  # Fixed width for consistency
+            width=20
         )
         clear_btn.pack(side=tk.LEFT, padx=5)
 
@@ -135,26 +137,25 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             text=get_text('parse_config'),
             command=self.parse_text_config,
             style="Accent.TButton",
-            width=20  # Fixed width for consistency
+            width=20
         )
         parse_btn.pack(side=tk.LEFT, padx=5)
 
         # Server List Section
         list_frame = ttk.LabelFrame(main_frame, text=get_text('server_configs'), padding="10", style="TLabelframe")
-        list_frame.grid(row=3, column=0, columnspan=2, sticky="nsew", pady=(0, 10))
+        list_frame.grid(row=3, column=0, columnspan=2, sticky="nsew", pady=(0, 20))
         list_container = ttk.Frame(list_frame, style="TFrame")
         list_container.pack(fill=tk.BOTH, expand=True)
 
-        # Set minimum height for the Treeview
+        # Configure the Treeview
         self.server_tree = ttk.Treeview(
             list_container,
             columns=("selected", "type", "name", "environment"),
             show="headings",
             style="ServerList.Treeview",
-            height=10  # Set minimum number of visible items
+            height=10
         )
 
-        # Configure columns with translated headers
         self.server_tree.heading("selected", text=get_text('col_select'))
         self.server_tree.heading("type", text=get_text('col_type'))
         self.server_tree.heading("name", text=get_text('col_name'))
@@ -178,7 +179,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         self.server_tree.bind('<Button-1>', self.handle_server_click)
 
-        # Publish Button Section
+        # Publish Button
         publish_frame = ttk.Frame(main_frame, style="TFrame")
         publish_frame.grid(row=4, column=0, columnspan=2, sticky="ew")
 
@@ -189,20 +190,6 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             style="Accent.TButton"
         )
         self.publish_button.pack(fill=tk.X)
-
-    def _adjust_frame_heights(self, left_frame, editor_frame):
-        """Adjust the heights of left_frame and editor_frame to match"""
-        left_frame.update_idletasks()
-        height = left_frame.winfo_reqheight()
-
-        # Prevent automatic resizing
-        left_frame.grid_propagate(False)
-        editor_frame.grid_propagate(False)
-
-        # Set both frames to the same height
-        left_frame.configure(height=height)
-        editor_frame.configure(height=height)
-
 
     def publish_extension(self):
         """Handle the publish button click event"""
