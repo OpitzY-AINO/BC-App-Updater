@@ -5,7 +5,7 @@ import json
 from ui.drag_drop import DragDropZone
 from ui.styles import apply_styles
 from utils.json_parser import parse_server_config
-from utils.powershell_manager import execute_powershell
+from utils.powershell_manager import execute_powershell, publish_to_environment # Added publish_to_environment
 from utils.config_manager import ConfigurationManager
 import os
 
@@ -324,6 +324,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             messagebox.showerror("Error", f"Failed to parse configuration: {str(e)}")
 
     def publish_extension(self):
+        """Handle the publish button click event"""
         if not self.app_file_path:
             messagebox.showerror("Error", "Please select an app file first")
             return
@@ -334,25 +335,95 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             messagebox.showerror("Error", "Please select at least one server")
             return
 
+        # Confirm deployment
+        app_name = os.path.basename(self.app_file_path)
+        selected_count = len(selected_items)
+        if not messagebox.askyesno(
+            "Confirm Deployment",
+            f"Deploy {app_name} to {selected_count} selected server(s)?",
+        ):
+            return
+
         # Map selected items back to configurations
-        selected_configs = []
         all_configs = self.config_manager.get_configurations()
-        for item in selected_items:
-            index = int(item.split('_')[1])
-            if 0 <= index < len(all_configs):
-                selected_configs.append(all_configs[index])
+        deployment_results = []
 
         try:
-            for config in selected_configs:
-                # Example PowerShell command - to be replaced with actual implementation
-                ps_command = f"""
-                Write-Host "Publishing {os.path.basename(self.app_file_path)} to {config['name']}"
-                """
-                execute_powershell(ps_command)
+            # Create progress dialog
+            progress_window = tk.Toplevel(self)
+            progress_window.title("Deployment Progress")
+            progress_window.geometry("400x300")
+            progress_window.transient(self)
+            progress_window.grab_set()
 
-            messagebox.showinfo("Success", "Publishing completed successfully")
+            # Configure progress window
+            progress_frame = ttk.Frame(progress_window, padding="20", style="Card.TFrame")
+            progress_frame.pack(fill=tk.BOTH, expand=True)
+
+            # Add text widget for progress
+            progress_text = scrolledtext.ScrolledText(
+                progress_frame,
+                height=10,
+                font=("Consolas", 10),
+                bg='#181825',
+                fg='#cdd6f4'
+            )
+            progress_text.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
+
+            # Add close button (initially disabled)
+            close_btn = ttk.Button(
+                progress_frame,
+                text="Close",
+                command=progress_window.destroy,
+                state="disabled",
+                style="Accent.TButton"
+            )
+            close_btn.pack(fill=tk.X)
+
+            # Update progress text
+            def update_progress(message):
+                progress_text.insert(tk.END, f"{message}\n")
+                progress_text.see(tk.END)
+                progress_text.update()
+
+            # Deploy to each selected server
+            for item in selected_items:
+                index = int(item.split('_')[1])
+                if 0 <= index < len(all_configs):
+                    config = all_configs[index]
+                    update_progress(f"\nDeploying to {config['name']}...")
+
+                    success, message = publish_to_environment(self.app_file_path, config)
+                    deployment_results.append((config['name'], success, message))
+
+                    # Update progress with result
+                    status = "✓" if success else "✗"
+                    update_progress(f"{status} {message}")
+
+            # Show final summary
+            update_progress("\n=== Deployment Summary ===")
+            successful = sum(1 for _, success, _ in deployment_results if success)
+            failed = len(deployment_results) - successful
+            update_progress(f"Successful: {successful}")
+            update_progress(f"Failed: {failed}")
+
+            # Enable close button
+            close_btn.configure(state="normal")
+
+            # Show error message if any deployments failed
+            if failed > 0:
+                messagebox.showerror(
+                    "Deployment Complete",
+                    f"Deployment completed with {failed} error(s).\nCheck the progress window for details."
+                )
+            else:
+                messagebox.showinfo(
+                    "Deployment Complete",
+                    "All deployments completed successfully!"
+                )
+
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to publish: {str(e)}")
+            messagebox.showerror("Error", f"Deployment failed: {str(e)}")
 
     def show_text_menu(self, event):
         """Show the right-click menu for the text area"""
