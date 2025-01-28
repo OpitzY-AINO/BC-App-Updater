@@ -5,11 +5,7 @@ import os
 
 class DragDropZone(ttk.Frame):
     def __init__(self, parent, text, callback, file_types=None):
-        # Initialize parent as TkinterDnD.Frame
-        if not isinstance(parent, TkinterDnD.Tk) and not isinstance(parent, TkinterDnD.Frame):
-            parent = TkinterDnD.Frame(parent)
         super().__init__(parent)
-
         self.callback = callback
         self.file_types = file_types or []
 
@@ -30,6 +26,8 @@ class DragDropZone(ttk.Frame):
         # Register drag-and-drop events
         self.drop_target.drop_target_register(DND_FILES)
         self.drop_target.dnd_bind('<<Drop>>', self.handle_drop)
+        self.drop_target.dnd_bind('<<DragEnter>>', self.handle_drag_enter)
+        self.drop_target.dnd_bind('<<DragLeave>>', self.handle_drag_leave)
 
     def browse_file(self, event=None):
         """Handle click-to-browse functionality"""
@@ -54,6 +52,14 @@ class DragDropZone(ttk.Frame):
                 return
 
         self.callback(file_path)
+        self.drop_target.configure(style="DropZone.TLabel")
+
+    def handle_drag_enter(self, event):
+        """Visual feedback when dragging over the zone"""
+        self.drop_target.configure(style="DropZoneActive.TLabel")
+
+    def handle_drag_leave(self, event):
+        """Reset visual feedback when leaving the zone"""
         self.drop_target.configure(style="DropZone.TLabel")
 
     def on_enter(self, event):
