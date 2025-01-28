@@ -32,7 +32,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
     def setup_ui(self):
         # Main container with padding
-        main_frame = ttk.Frame(self, padding="20")
+        main_frame = ttk.Frame(self, padding="30")
         main_frame.pack(fill=tk.BOTH, expand=True)
 
         # Header
@@ -41,15 +41,15 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             text="Business Central Extension Publisher",
             style="Header.TLabel"
         )
-        header.pack(fill=tk.X, pady=(0, 20))
+        header.pack(fill=tk.X, pady=(0, 30))
 
         # Top section for file uploads
         top_frame = ttk.Frame(main_frame)
-        top_frame.pack(fill=tk.X, pady=(0, 20))
+        top_frame.pack(fill=tk.X, pady=(0, 25))
 
         # App file drop zone in its own frame
-        app_frame = ttk.LabelFrame(top_frame, text="Extension File", padding="10")
-        app_frame.pack(fill=tk.X, pady=(0, 10))
+        app_frame = ttk.LabelFrame(top_frame, text="Extension File", padding="15")
+        app_frame.pack(fill=tk.X, pady=(0, 15))
 
         self.app_drop_zone = DragDropZone(
             app_frame,
@@ -57,19 +57,19 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             self.handle_app_drop,
             ['.app']
         )
-        self.app_drop_zone.pack(fill=tk.X, padx=10, pady=10)
+        self.app_drop_zone.pack(fill=tk.X, padx=15, pady=15)
 
         # Server configuration section
-        config_frame = ttk.LabelFrame(main_frame, text="Server Configuration", padding="10")
-        config_frame.pack(fill=tk.X, pady=(0, 20))
+        config_frame = ttk.LabelFrame(main_frame, text="Server Configuration", padding="15")
+        config_frame.pack(fill=tk.X, pady=(0, 25))
 
         # Config input methods container
         config_methods = ttk.Frame(config_frame)
-        config_methods.pack(fill=tk.X, padx=10, pady=5)
+        config_methods.pack(fill=tk.X, padx=15, pady=10)
 
         # Left side: Drop zone
         drop_frame = ttk.Frame(config_methods)
-        drop_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 5))
+        drop_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
 
         self.config_drop_zone = DragDropZone(
             drop_frame,
@@ -81,45 +81,45 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         # Right side: Text input
         text_frame = ttk.Frame(config_methods)
-        text_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0))
+        text_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(10, 0))
+
+        # Buttons container
+        button_frame = ttk.Frame(text_frame)
+        button_frame.pack(fill=tk.X, pady=(0, 10))
 
         # Clear button
         clear_btn = ttk.Button(
-            text_frame,
+            button_frame,
             text="Clear",
             command=lambda: self.config_text.delete("1.0", tk.END),
             style="Accent.TButton"
         )
-        clear_btn.pack(fill=tk.X, pady=(0, 5))
+        clear_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
+
+        # Parse button
+        parse_btn = ttk.Button(
+            button_frame,
+            text="Parse Configuration",
+            command=self.parse_text_config,
+            style="Accent.TButton"
+        )
+        parse_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(5, 0))
 
         # Configure text widget with dark theme
         self.config_text = scrolledtext.ScrolledText(
             text_frame,
             height=8,
-            width=40,
-            font=("Consolas", 10),
-            bg=self.dark_colors['bg_lighter'],
-            fg=self.dark_colors['text'],
-            insertbackground=self.dark_colors['text']
+            width=40
         )
         self.config_text.pack(fill=tk.BOTH, expand=True)
 
-        # Parse button
-        parse_btn = ttk.Button(
-            text_frame,
-            text="Parse Configuration",
-            command=self.parse_text_config,
-            style="Accent.TButton"
-        )
-        parse_btn.pack(fill=tk.X, pady=(5, 0))
-
         # Server list section
-        list_frame = ttk.LabelFrame(main_frame, text="Server Configurations", padding="10")
-        list_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 20))
+        list_frame = ttk.LabelFrame(main_frame, text="Server Configurations", padding="15")
+        list_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 25))
 
         # Server list with modern styling
         self.server_list = ttk.Frame(list_frame, style="ServerList.TFrame")
-        self.server_list.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+        self.server_list.pack(fill=tk.BOTH, expand=True, padx=15, pady=10)
 
         # Scrollable server list
         scrollbar = ttk.Scrollbar(self.server_list)
@@ -128,7 +128,6 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.servers_canvas = tk.Canvas(
             self.server_list,
             yscrollcommand=scrollbar.set,
-            background=self.dark_colors['bg_lighter'],
             highlightthickness=0
         )
         self.servers_frame = ttk.Frame(self.servers_canvas)
@@ -153,7 +152,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             command=self.publish_extension,
             style="Accent.TButton"
         )
-        self.publish_button.pack(fill=tk.X, pady=(0, 10))
+        self.publish_button.pack(fill=tk.X)
 
     def show_text_menu(self, event):
         """Show the right-click menu for the text area"""
@@ -261,7 +260,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         # Add new items with modern styling
         for config in self.server_configs:
             frame = ttk.Frame(self.servers_frame)
-            frame.pack(fill=tk.X, pady=5, padx=5)
+            frame.pack(fill=tk.X, pady=5, padx=15)
 
             # Initialize checkbox as unchecked
             var = tk.BooleanVar(value=False)
@@ -279,7 +278,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
                 frame,
                 text=display_text
             )
-            name_label.pack(side=tk.LEFT, padx=5)
+            name_label.pack(side=tk.LEFT, padx=10)
 
             config['checkbox_var'] = var
 
