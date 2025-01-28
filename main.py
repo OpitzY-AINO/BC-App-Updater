@@ -85,7 +85,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         clear_btn = ttk.Button(
             button_frame,
             text="Clear",
-            command=lambda: self.config_text.delete("1.0", tk.END),
+            command=self.clear_all,
             style="Accent.TButton"
         )
         clear_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 2))
@@ -106,8 +106,8 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             font=("Consolas", 10),
             relief="solid",
             borderwidth=1,
-            bg='#181825',  # Match bg_darker color
-            fg='#cdd6f4',  # Match text color
+            bg='#181825',
+            fg='#cdd6f4',
         )
 
         # Create and configure modern scrollbar for text
@@ -138,7 +138,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             self.server_list,
             highlightthickness=0,
             bd=0,
-            background='#181825'  # Match bg_darker color
+            background='#181825'
         )
 
         # Create and configure modern scrollbar for server list
@@ -163,12 +163,13 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         # Add mouse wheel scrolling
         def _on_mousewheel(event):
-            # Only scroll if mouse is over the canvas
-            if str(event.widget) == str(self.servers_canvas):
-                self.servers_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+            # Bind mousewheel event to the canvas for smoother scrolling
+            self.servers_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+            return "break"  # Prevent event from propagating
 
-        # Bind mouse wheel to canvas specifically
-        self.servers_canvas.bind("<MouseWheel>", _on_mousewheel)
+        # Bind mouse wheel to server list frame and all its children
+        self.server_list.bind_all("<MouseWheel>", _on_mousewheel)
+
 
         # Create the canvas window with proper width
         self.canvas_window = self.servers_canvas.create_window(
@@ -272,8 +273,6 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
                 self.process_config(config_data)
 
-                # Update the drop zone text
-                self.config_drop_zone.update_text(f"Configuration loaded successfully")
         except json.JSONDecodeError as e:
             line_no = int(str(e).split('line')[1].split()[0])
             col_no = int(str(e).split('column')[1].split()[0])
@@ -286,6 +285,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         try:
             self.server_configs = parse_server_config(config_data)
             self.update_server_list()
+            # Remove popup message, only update dropzone text
             self.config_drop_zone.update_text(f"Loaded {len(self.server_configs)} server configurations")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to process configuration: {str(e)}")
@@ -300,7 +300,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             frame = ttk.Frame(self.servers_frame, style="ServerList.TFrame")
             frame.pack(fill=tk.X, pady=5, padx=5)
 
-            var = tk.BooleanVar(value=False)  # Changed initial value to False
+            var = tk.BooleanVar(value=False)
             cb = ttk.Checkbutton(frame, variable=var, style="ServerList.TCheckbutton")
             cb.pack(side=tk.LEFT)
 
@@ -319,6 +319,10 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             name_label.pack(side=tk.LEFT, padx=5)
 
             config['checkbox_var'] = var
+
+            # Bind mouse wheel to each server item frame.  This line was missing from the original code.
+            frame.bind("<MouseWheel>", lambda e, frame=frame: self.servers_canvas.yview_scroll(int(-1*(e.delta/120)), "units"))
+
 
     def publish_extension(self):
         if not self.app_file_path:
@@ -346,31 +350,12 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         except Exception as e:
             messagebox.showerror("Error", f"Failed to publish: {str(e)}")
 
-    def load_config_file(self):
-        """Load configuration from a JSON file"""
-        file_path = filedialog.askopenfilename(
-            title="Select Configuration File",
-            filetypes=[
-                ("JSON files", "*.json"),
-                ("Text files", "*.txt"),
-                ("All files", "*.*")
-            ]
-        )
-
-        if file_path:
-            try:
-                with open(file_path, 'r') as f:
-                    config_text = f.read()
-
-                # Update text area
-                self.config_text.delete("1.0", tk.END)
-                self.config_text.insert("1.0", config_text)
-
-                # Try to parse the configuration
-                config_data = json.loads(config_text)
-                self.process_config(config_data)
-            except Exception as e:
-                messagebox.showerror("Error", f"Failed to load configuration: {str(e)}")
+    def clear_all(self):
+        """Clear both the text area and server configurations"""
+        self.config_text.delete("1.0", tk.END)
+        self.server_configs = []
+        self.update_server_list()
+        self.config_drop_zone.update_text("Drop server config JSON here\nor click to browse")
 
 
 if __name__ == "__main__":
