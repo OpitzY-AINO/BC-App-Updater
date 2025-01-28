@@ -120,7 +120,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         list_container.grid_rowconfigure(0, weight=1)
         list_container.grid_columnconfigure(0, weight=1)
 
-        # Set minimum height for the Treeview
+        # Create Treeview first
         self.server_tree = ttk.Treeview(
             list_container,
             columns=("selected", "type", "name", "environment"),
@@ -130,15 +130,18 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
 
         # Configure columns with translated headers
-        self.server_tree.heading("selected", text=get_text('col_select'))
-        self.server_tree.heading("type", text=get_text('col_type'))
-        self.server_tree.heading("name", text=get_text('col_name'))
-        self.server_tree.heading("environment", text=get_text('col_environment'))
+        self.server_tree.heading("selected", text=get_text('col_select'), anchor="center")
+        self.server_tree.heading("type", text=get_text('col_type'), anchor="center")
+        self.server_tree.heading("name", text=get_text('col_name'), anchor="center")
+        self.server_tree.heading("environment", text=get_text('col_environment'), anchor="center")
 
-        self.server_tree.column("selected", width=60, stretch=False)
-        self.server_tree.column("type", width=100, stretch=False)
-        self.server_tree.column("name", width=200, stretch=True)
-        self.server_tree.column("environment", width=300, stretch=True)
+        # Configure column widths and alignment
+        self.server_tree.column("selected", width=120, stretch=False, anchor="center")  # Further increased width
+        self.server_tree.column("type", width=150, stretch=False, anchor="center")      # Increased width more
+        self.server_tree.column("name", width=300, stretch=True, anchor="center")       # Increased width more
+        self.server_tree.column("environment", width=400, stretch=True, anchor="center") # Increased width more
+
+        self.server_tree.pack(fill=tk.BOTH, expand=True)
 
         tree_scrollbar = ttk.Scrollbar(
             list_container,
@@ -299,7 +302,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             item = self.server_tree.identify_row(event.y)
 
             if column == "#1" and item:  # Checkbox column
-                # Toggle selection state
+                # Toggle selection state with larger symbols
                 current_values = self.server_tree.item(item)['values']
                 new_values = list(current_values)
                 new_values[0] = "☑" if current_values[0] == "☐" else "☐"
@@ -331,7 +334,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             else:  # OnPrem
                 environment = config['serverInstance']
 
-            # Insert item with checkbox
+            # Insert item with checkbox (using larger symbols for better visibility)
             self.server_tree.insert(
                 "",
                 tk.END,
