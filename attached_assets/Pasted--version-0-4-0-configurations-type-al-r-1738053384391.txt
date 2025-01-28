@@ -41,7 +41,7 @@
             "authentication": "AAD",
             "environmentName": "AEMDev2",
             "environmentType": "Sandbox",
-            "breakOnNext": "Background"
+            "breakOnNext": "Background",
         },
         {
             "name": "Portainer",

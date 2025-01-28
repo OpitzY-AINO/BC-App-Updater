@@ -209,12 +209,31 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
     def handle_config_drop(self, file_path):
         try:
             with open(file_path, 'r') as f:
-                config_data = json.load(f)
-            self.process_config(config_data)
+                config_text = f.read()
 
-            # Show the config in the text area
-            self.config_text.delete("1.0", tk.END)
-            self.config_text.insert("1.0", json.dumps(config_data, indent=2))
+                # Remove trailing commas before arrays and objects
+                config_text = config_text.replace(",]", "]")
+                config_text = config_text.replace(",}", "}")
+                config_text = config_text.replace(",\n]", "\n]")
+                config_text = config_text.replace(",\n}", "\n}")
+
+                # Try to parse the configuration
+                config_data = json.loads(config_text)
+
+                # Format and display the properly formatted JSON
+                formatted_json = json.dumps(config_data, indent=2)
+                self.config_text.delete("1.0", tk.END)
+                self.config_text.insert("1.0", formatted_json)
+
+                self.process_config(config_data)
+
+                # Update the drop zone text
+                self.config_drop_zone.update_text(f"Configuration loaded successfully")
+        except json.JSONDecodeError as e:
+            line_no = int(str(e).split('line')[1].split()[0])
+            col_no = int(str(e).split('column')[1].split()[0])
+            error_msg = f"JSON Format Error:\n{str(e)}\n\nPlease check line {line_no}, column {col_no} of your JSON configuration."
+            messagebox.showerror("Error", error_msg)
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load configuration: {str(e)}")
 
