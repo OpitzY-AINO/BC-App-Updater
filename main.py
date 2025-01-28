@@ -140,7 +140,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         # Configure columns
         self.server_tree.heading("type", text="Type")
         self.server_tree.heading("name", text="Name")
-        self.server_tree.heading("environment", text="Environment")
+        self.server_tree.heading("environment", text="Environment / Instance")
 
         # Set column widths
         self.server_tree.column("type", width=100, stretch=False)
@@ -164,7 +164,6 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         # Bind click handler
         self.server_tree.bind('<Button-1>', self.handle_server_click)
-
 
         # Publish button with accent styling
         self.publish_button = ttk.Button(
