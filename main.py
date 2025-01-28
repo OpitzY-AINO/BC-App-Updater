@@ -20,6 +20,13 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.app_file_path = None
         self.server_configs = []
 
+        # Configure dark theme colors
+        self.dark_colors = {
+            'bg_dark': '#1a1b26',
+            'bg_lighter': '#24283b',
+            'text': '#c0caf5',
+        }
+
         self.setup_ui()
         apply_styles(self)
 
@@ -50,7 +57,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             self.handle_app_drop,
             ['.app']
         )
-        self.app_drop_zone.pack(fill=tk.X)
+        self.app_drop_zone.pack(fill=tk.X, padx=10, pady=10)
 
         # Server configuration section
         config_frame = ttk.LabelFrame(main_frame, text="Server Configuration", padding="10")
@@ -58,7 +65,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         # Config input methods container
         config_methods = ttk.Frame(config_frame)
-        config_methods.pack(fill=tk.X)
+        config_methods.pack(fill=tk.X, padx=10, pady=5)
 
         # Left side: Drop zone
         drop_frame = ttk.Frame(config_methods)
@@ -85,20 +92,17 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         clear_btn.pack(fill=tk.X, pady=(0, 5))
 
+        # Configure text widget with dark theme
         self.config_text = scrolledtext.ScrolledText(
             text_frame,
             height=8,
             width=40,
-            font=("Consolas", 10)
+            font=("Consolas", 10),
+            bg=self.dark_colors['bg_lighter'],
+            fg=self.dark_colors['text'],
+            insertbackground=self.dark_colors['text']
         )
         self.config_text.pack(fill=tk.BOTH, expand=True)
-
-        # Create right-click menu for the text area
-        self.text_menu = tk.Menu(self, tearoff=0)
-        self.text_menu.add_command(label="Clear", command=lambda: self.config_text.delete("1.0", tk.END))
-
-        # Bind right-click menu
-        self.config_text.bind("<Button-3>", self.show_text_menu)
 
         # Parse button
         parse_btn = ttk.Button(
@@ -115,7 +119,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         # Server list with modern styling
         self.server_list = ttk.Frame(list_frame, style="ServerList.TFrame")
-        self.server_list.pack(fill=tk.BOTH, expand=True)
+        self.server_list.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
 
         # Scrollable server list
         scrollbar = ttk.Scrollbar(self.server_list)
@@ -124,7 +128,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.servers_canvas = tk.Canvas(
             self.server_list,
             yscrollcommand=scrollbar.set,
-            background='#ffffff',
+            background=self.dark_colors['bg_lighter'],
             highlightthickness=0
         )
         self.servers_frame = ttk.Frame(self.servers_canvas)
@@ -134,9 +138,13 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.servers_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         self.servers_canvas.create_window((0, 0), window=self.servers_frame, anchor='nw')
 
-        self.servers_frame.bind('<Configure>', lambda e: self.servers_canvas.configure(
-            scrollregion=self.servers_canvas.bbox('all')
-        ))
+        # Update server list scrolling
+        def on_frame_configure(event):
+            self.servers_canvas.configure(scrollregion=self.servers_canvas.bbox('all'))
+            canvas_width = event.width
+            self.servers_canvas.itemconfig(self.servers_canvas.find_all()[0], width=canvas_width)
+
+        self.servers_frame.bind('<Configure>', on_frame_configure)
 
         # Publish button
         self.publish_button = ttk.Button(
@@ -145,7 +153,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             command=self.publish_extension,
             style="Accent.TButton"
         )
-        self.publish_button.pack(fill=tk.X)
+        self.publish_button.pack(fill=tk.X, pady=(0, 10))
 
     def show_text_menu(self, event):
         """Show the right-click menu for the text area"""
@@ -255,7 +263,8 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             frame = ttk.Frame(self.servers_frame)
             frame.pack(fill=tk.X, pady=5, padx=5)
 
-            var = tk.BooleanVar(value=True)
+            # Initialize checkbox as unchecked
+            var = tk.BooleanVar(value=False)
             cb = ttk.Checkbutton(frame, variable=var)
             cb.pack(side=tk.LEFT)
 
