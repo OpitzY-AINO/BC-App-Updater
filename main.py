@@ -259,9 +259,16 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             cb = ttk.Checkbutton(frame, variable=var)
             cb.pack(side=tk.LEFT)
 
+            # Create display text based on environment type
+            display_text = config['name']
+            if config['environmentType'].lower() == 'sandbox':
+                display_text += f" ({config['environmentName']})"
+            elif config['environmentType'].lower() == 'onprem':
+                display_text += f" ({config['serverInstance']}@{config['server']})"
+
             name_label = ttk.Label(
                 frame,
-                text=f"{config['name']} ({config['environmentName']})"
+                text=display_text
             )
             name_label.pack(side=tk.LEFT, padx=5)
 
