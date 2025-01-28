@@ -55,10 +55,11 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         # Left side container for both dropzones
         left_frame = ttk.Frame(main_frame, style="TFrame")
         left_frame.grid(row=1, column=0, sticky="nsew", padx=(0, 10))
+        left_frame.grid_columnconfigure(0, weight=1)  # Allow horizontal expansion
 
         # Extension File Section
         app_frame = ttk.LabelFrame(left_frame, text=get_text('extension_file'), padding="10", style="TLabelframe")
-        app_frame.pack(fill=tk.X, pady=(0, 5))
+        app_frame.pack(fill=tk.X, pady=(0, 10))  # Increased bottom padding
 
         self.app_drop_zone = DragDropZone(
             app_frame,
@@ -80,11 +81,19 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         self.config_drop_zone.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
+        # Calculate total height of dropzones for editor
+        app_frame.update_idletasks()
+        config_frame.update_idletasks()
+        total_height = app_frame.winfo_height() + config_frame.winfo_height() + 10  # +10 for padding
+        left_frame.configure(height=total_height)
+
         # Right side: Text editor with matching height
         editor_frame = ttk.Frame(main_frame, style="TFrame")
         editor_frame.grid(row=1, column=1, sticky="nsew")
+        editor_frame.grid_propagate(False)  # Prevent frame from resizing
+        editor_frame.configure(height=total_height)  # Match height with left frame
 
-        # Text area with scrollbar and fixed height
+        # Text area with scrollbar
         self.config_text = tk.Text(
             editor_frame,
             font=("Consolas", 10),
@@ -94,8 +103,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             bg='#181825',
             fg='#cdd6f4',
             padx=10,
-            pady=10,
-            height=12  # Set a fixed height to match dropzones
+            pady=10
         )
 
         text_scrollbar = ttk.Scrollbar(
@@ -112,6 +120,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         # Button container centered below dropzones and editor
         button_frame = ttk.Frame(main_frame, style="TFrame")
         button_frame.grid(row=2, column=0, columnspan=2, sticky="ew", pady=10)
+        button_frame.columnconfigure(0, weight=1)  # Center the buttons
 
         # Clear and Parse buttons centered
         button_container = ttk.Frame(button_frame, style="TFrame")
@@ -121,7 +130,8 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             button_container,
             text=get_text('clear'),
             command=self.clear_all,
-            style="Accent.TButton"
+            style="Accent.TButton",
+            width=20  # Fixed width for consistency
         )
         clear_btn.pack(side=tk.LEFT, padx=5)
 
@@ -129,7 +139,8 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             button_container,
             text=get_text('parse_config'),
             command=self.parse_text_config,
-            style="Accent.TButton"
+            style="Accent.TButton",
+            width=20  # Fixed width for consistency
         )
         parse_btn.pack(side=tk.LEFT, padx=5)
 
