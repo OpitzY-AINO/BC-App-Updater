@@ -75,7 +75,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             self.handle_app_drop,
             ['.app']
         )
-        self.app_drop_zone.pack(fill=tk.X, padx=5, pady=5)
+        self.app_drop_zone.pack(fill=tk.BOTH, expand=True)
 
         # Server Configuration Section
         config_frame = ttk.LabelFrame(main_frame, text=get_text('server_config'), padding="10", style="TLabelframe")
@@ -191,7 +191,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             state="disabled",
             style="Accent.TButton"
         )
-        self.publish_button.pack(fill=tk.X)
+        self.publish_button.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(10, 10))
 
     def publish_extension(self):
         """Handle the publish button click event"""
