@@ -419,16 +419,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             style="Accent.TButton",
             command=lambda: self.load_current_configs(editor)
         )
-        load_btn.pack(side=tk.LEFT)
-
-        # Close button
-        close_btn = ttk.Button(
-            button_frame,
-            text=get_text('close'),
-            style="Accent.TButton",
-            command=popup.destroy
-        )
-        close_btn.pack(side=tk.RIGHT, padx=(5, 0))
+        load_btn.grid(row=0, column=0, sticky="w")
 
         # Apply button
         apply_btn = ttk.Button(
@@ -437,7 +428,19 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             style="Accent.TButton",
             command=lambda: self.apply_editor_changes(editor.get("1.0", tk.END), popup)
         )
-        apply_btn.pack(side=tk.RIGHT)
+        apply_btn.grid(row=0, column=1, sticky="e", padx=(5, 0))
+
+        # Close button
+        close_btn = ttk.Button(
+            button_frame,
+            text=get_text('close'),
+            style="Accent.TButton",
+            command=popup.destroy
+        )
+        close_btn.grid(row=0, column=2, sticky="e")
+
+        # Configure button frame grid
+        button_frame.grid_columnconfigure(1, weight=1)
 
         # Focus the editor
         editor.focus_set()
