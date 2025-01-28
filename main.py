@@ -9,37 +9,6 @@ from utils.powershell_manager import execute_powershell, publish_to_environment
 from utils.config_manager import ConfigurationManager
 import os
 
-def preprocess_json_text(json_text):
-    """
-    Preprocess JSON text to handle common formatting issues.
-
-    Args:
-        json_text (str): Raw JSON text
-
-    Returns:
-        str: Preprocessed JSON text
-    """
-    # Remove trailing commas before arrays and objects
-    processed_text = json_text.replace(",]", "]").replace(",}", "}")
-    processed_text = processed_text.replace(",\n]", "\n]").replace(",\n}", "\n}")
-
-    try:
-        # Try to parse as JSON first
-        config = json.loads(processed_text)
-        # If it's already a valid configuration object (has version and configurations)
-        if isinstance(config, dict) and 'version' in config and 'configurations' in config:
-            return processed_text
-    except json.JSONDecodeError:
-        pass
-
-    # Check if we have multiple objects without array brackets
-    stripped = processed_text.strip()
-    if stripped.count('{') > 1 and not (stripped.startswith('[') and stripped.endswith(']')):
-        # Wrap in array brackets if not already wrapped and contains multiple objects
-        processed_text = f'[{processed_text}]'
-
-    return processed_text
-
 class BusinessCentralPublisher(TkinterDnD.Tk):
     def __init__(self):
         super().__init__()
@@ -52,6 +21,10 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.app_file_path = None
         self.config_manager = ConfigurationManager()
 
+        # Configure main window grid weights
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+
         # Apply styles first
         apply_styles(self)
         self.setup_ui()
@@ -60,10 +33,14 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.update_server_list()
 
     def setup_ui(self):
-        """Set up the user interface"""
-        # Main container with padding
+        """Set up the user interface with grid layout"""
+        # Main container
         main_frame = ttk.Frame(self, padding="20", style="TFrame")
-        main_frame.pack(fill=tk.BOTH, expand=True)
+        main_frame.grid(row=0, column=0, sticky="nsew")
+
+        # Configure grid weights for main_frame
+        main_frame.grid_rowconfigure(3, weight=1)  # Server list row
+        main_frame.grid_columnconfigure(0, weight=1)
 
         # Header with modern styling
         header = ttk.Label(
@@ -71,15 +48,11 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             text="Business Central Extension Publisher",
             style="Header.TLabel"
         )
-        header.pack(fill=tk.X, pady=(0, 20))
+        header.grid(row=0, column=0, sticky="ew", pady=(0, 20))
 
-        # Top section for file uploads
-        top_frame = ttk.Frame(main_frame, style="TFrame")
-        top_frame.pack(fill=tk.X, pady=(0, 20))
-
-        # App file drop zone in its own frame
-        app_frame = ttk.LabelFrame(top_frame, text="Extension File", padding="10", style="TLabelframe")
-        app_frame.pack(fill=tk.X, pady=(0, 10))
+        # Extension File Section
+        app_frame = ttk.LabelFrame(main_frame, text="Extension File", padding="10", style="TLabelframe")
+        app_frame.grid(row=1, column=0, sticky="ew", pady=(0, 10))
 
         self.app_drop_zone = DragDropZone(
             app_frame,
@@ -89,16 +62,16 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         self.app_drop_zone.pack(fill=tk.X, padx=5, pady=5)
 
-        # Server configuration section
+        # Server Configuration Section
         config_frame = ttk.LabelFrame(main_frame, text="Server Configuration", padding="10", style="TLabelframe")
-        config_frame.pack(fill=tk.X, pady=(0, 20))
+        config_frame.grid(row=2, column=0, sticky="ew", pady=(0, 10))
 
-        # Config input methods container
-        config_methods = ttk.Frame(config_frame, style="TFrame")
-        config_methods.pack(fill=tk.X)
+        # Inner frame for drop zone and text area
+        config_inner = ttk.Frame(config_frame, style="TFrame")
+        config_inner.pack(fill=tk.X, expand=True)
 
         # Left side: Drop zone
-        drop_frame = ttk.Frame(config_methods, style="TFrame")
+        drop_frame = ttk.Frame(config_inner, style="TFrame")
         drop_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 5))
 
         self.config_drop_zone = DragDropZone(
@@ -109,15 +82,15 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         self.config_drop_zone.pack(fill=tk.BOTH, expand=True)
 
-        # Right side: Text input
-        text_frame = ttk.Frame(config_methods, style="TFrame")
+        # Right side: Text input and buttons
+        text_frame = ttk.Frame(config_inner, style="TFrame")
         text_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0))
 
         # Button container
         button_frame = ttk.Frame(text_frame, style="TFrame")
         button_frame.pack(fill=tk.X, pady=(0, 5))
 
-        # Clear and Parse buttons side by side
+        # Clear and Parse buttons
         clear_btn = ttk.Button(
             button_frame,
             text="Clear",
@@ -134,7 +107,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         parse_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(2, 0))
 
-        # Configuration text area with modern scrollbar
+        # Text area with scrollbar
         self.config_text = tk.Text(
             text_frame,
             height=8,
@@ -143,10 +116,9 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             relief="solid",
             borderwidth=1,
             bg='#181825',
-            fg='#cdd6f4',
+            fg='#cdd6f4'
         )
 
-        # Create and configure modern scrollbar for text
         text_scrollbar = ttk.Scrollbar(
             text_frame,
             orient="vertical",
@@ -155,18 +127,27 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
 
         self.config_text.configure(yscrollcommand=text_scrollbar.set)
-
-        # Pack text and scrollbar
         self.config_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         text_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        # Server list section with Treeview
+        # Server List Section (with weight for expansion)
         list_frame = ttk.LabelFrame(main_frame, text="Server Configurations", padding="10", style="TLabelframe")
-        list_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 20))
+        list_frame.grid(row=3, column=0, sticky="nsew", pady=(0, 10))
 
-        # Create Treeview for server list with checkbox column
+        # Configure list_frame grid weights
+        list_frame.grid_rowconfigure(0, weight=1)
+        list_frame.grid_columnconfigure(0, weight=1)
+
+        # Server list with scrollbar
+        list_container = ttk.Frame(list_frame, style="TFrame")
+        list_container.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+
+        # Configure list_container grid weights
+        list_container.grid_rowconfigure(0, weight=1)
+        list_container.grid_columnconfigure(0, weight=1)
+
         self.server_tree = ttk.Treeview(
-            list_frame,
+            list_container,
             columns=("selected", "type", "name", "environment"),
             show="headings",
             style="ServerList.Treeview"
@@ -178,15 +159,14 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.server_tree.heading("name", text="Name")
         self.server_tree.heading("environment", text="Environment / Instance")
 
-        # Set column widths
         self.server_tree.column("selected", width=60, stretch=False)
         self.server_tree.column("type", width=100, stretch=False)
         self.server_tree.column("name", width=200, stretch=True)
         self.server_tree.column("environment", width=300, stretch=True)
 
-        # Create scrollbar for Treeview
+        # Scrollbar for server list
         tree_scrollbar = ttk.Scrollbar(
-            list_frame,
+            list_container,
             orient="vertical",
             command=self.server_tree.yview,
             style="TScrollbar"
@@ -194,26 +174,24 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         self.server_tree.configure(yscrollcommand=tree_scrollbar.set)
 
-        # Pack Treeview and scrollbar
-        self.server_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0), pady=5)
-        tree_scrollbar.pack(side=tk.RIGHT, fill=tk.Y, pady=5)
+        # Grid layout for server list and scrollbar
+        self.server_tree.grid(row=0, column=0, sticky="nsew")
+        tree_scrollbar.grid(row=0, column=1, sticky="ns")
 
-        # Bind click handler for checkbox column
+        # Bind click handler
         self.server_tree.bind('<Button-1>', self.handle_server_click)
 
-        # Create a separate frame for the publish button to ensure proper spacing
-        button_container = ttk.Frame(main_frame, style="TFrame")
-        button_container.pack(fill=tk.X)  # Removed pady to reduce spacing
+        # Publish Button Section (fixed at bottom)
+        button_container = ttk.Frame(main_frame, style="Card.TFrame")
+        button_container.grid(row=4, column=0, sticky="ew", padx=5, pady=10)
 
-        # Publish button with accent styling
         self.publish_button = ttk.Button(
             button_container,
             text="Publish to Selected Servers",
             command=self.publish_extension,
             style="Accent.TButton"
         )
-        self.publish_button.pack(fill=tk.X, padx=5, pady=5)  # Adjusted padding
-
+        self.publish_button.pack(fill=tk.X, padx=5, pady=5)
 
     def handle_server_click(self, event):
         """Handle clicks on server rows"""
@@ -466,6 +444,36 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             pass
 
 
+def preprocess_json_text(json_text):
+    """
+    Preprocess JSON text to handle common formatting issues.
+
+    Args:
+        json_text (str): Raw JSON text
+
+    Returns:
+        str: Preprocessed JSON text
+    """
+    # Remove trailing commas before arrays and objects
+    processed_text = json_text.replace(",]", "]").replace(",}", "}")
+    processed_text = processed_text.replace(",\n]", "\n]").replace(",\n}", "\n}")
+
+    try:
+        # Try to parse as JSON first
+        config = json.loads(processed_text)
+        # If it's already a valid configuration object (has version and configurations)
+        if isinstance(config, dict) and 'version' in config and 'configurations' in config:
+            return processed_text
+    except json.JSONDecodeError:
+        pass
+
+    # Check if we have multiple objects without array brackets
+    stripped = processed_text.strip()
+    if stripped.count('{') > 1 and not (stripped.startswith('[') and stripped.endswith(']')):
+        # Wrap in array brackets if not already wrapped and contains multiple objects
+        processed_text = f'[{processed_text}]'
+
+    return processed_text
 
 if __name__ == "__main__":
     app = BusinessCentralPublisher()
