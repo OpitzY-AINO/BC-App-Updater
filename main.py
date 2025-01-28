@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from tkinterdnd2 import *
+from tkinterdnd2 import DND_FILES, TkinterDnD
 import json
 from ui.drag_drop import DragDropZone
 from ui.styles import apply_styles
