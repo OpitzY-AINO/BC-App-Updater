@@ -66,6 +66,17 @@ class ConfigurationManager:
         # Save after modifications
         self.save_configurations()
 
+    def replace_configurations(self, new_configs: List[Dict]) -> None:
+        """
+        Replace all configurations with new ones.
+        Used when editing configurations in the editor.
+
+        Args:
+            new_configs: List of new configurations to replace existing ones
+        """
+        self.configurations = new_configs
+        self.save_configurations()
+
     def clear_configurations(self) -> None:
         """Clear all configurations and save empty state."""
         self.configurations = []
