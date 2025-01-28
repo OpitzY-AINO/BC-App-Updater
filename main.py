@@ -35,12 +35,12 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
     def setup_ui(self):
         """Set up the user interface with grid layout"""
-        # Main container with increased padding
-        main_frame = ttk.Frame(self, padding="30", style="TFrame")
+        # Main container with padding
+        main_frame = ttk.Frame(self, padding="20", style="TFrame")
         main_frame.grid(row=0, column=0, sticky="nsew")
 
         # Configure grid weights for main_frame
-        main_frame.grid_rowconfigure(2, weight=3)  # Server list row gets more space
+        main_frame.grid_rowconfigure(2, weight=1)  # Server list row gets more space
         main_frame.grid_columnconfigure(0, weight=1)  # Left half
         main_frame.grid_columnconfigure(1, weight=1)  # Right half
 
@@ -50,17 +50,15 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             text=get_text('app_title'),
             style="Header.TLabel"
         )
-        header.grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 20))
+        header.grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 10))
 
         # Left side container for both dropzones
         left_frame = ttk.Frame(main_frame, style="TFrame")
         left_frame.grid(row=1, column=0, sticky="nsew", padx=(0, 10))
-        left_frame.grid_rowconfigure(1, weight=1)  # Give space to config dropzone
-        left_frame.grid_columnconfigure(0, weight=1)
 
         # Extension File Section
         app_frame = ttk.LabelFrame(left_frame, text=get_text('extension_file'), padding="10", style="TLabelframe")
-        app_frame.grid(row=0, column=0, sticky="new", pady=(0, 10))
+        app_frame.pack(fill=tk.X, pady=(0, 5))
 
         self.app_drop_zone = DragDropZone(
             app_frame,
@@ -72,7 +70,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         # Server Configuration Dropzone
         config_frame = ttk.LabelFrame(left_frame, text=get_text('server_config'), padding="10", style="TLabelframe")
-        config_frame.grid(row=1, column=0, sticky="sew")
+        config_frame.pack(fill=tk.X)
 
         self.config_drop_zone = DragDropZone(
             config_frame,
@@ -112,7 +110,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         # Button container below dropzones and editor
         button_frame = ttk.Frame(main_frame, style="TFrame")
-        button_frame.grid(row=2, column=0, columnspan=2, sticky="ew", pady=(10, 10))
+        button_frame.grid(row=2, column=0, columnspan=2, sticky="ew", pady=(5, 10))
 
         # Clear and Parse buttons centered
         button_container = ttk.Frame(button_frame, style="TFrame")
@@ -176,7 +174,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         # Publish Button Section
         publish_frame = ttk.Frame(main_frame, style="TFrame")
-        publish_frame.grid(row=4, column=0, columnspan=2, sticky="ew", pady=(0, 10))
+        publish_frame.grid(row=4, column=0, columnspan=2, sticky="ew")
 
         self.publish_button = ttk.Button(
             publish_frame,
