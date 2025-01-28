@@ -339,62 +339,6 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
                 values=("☐", env_type, name, environment)
             )
 
-    def parse_text_config(self):
-        """Parse configuration from text input"""
-        try:
-            config_text = self.config_text.get("1.0", tk.END).strip()
-            if not config_text:
-                messagebox.showerror("Error", get_text('enter_config'))
-                return
-
-            # Preprocess the JSON text
-            processed_text = preprocess_json_text(config_text)
-
-            # Try to parse and format JSON
-            config_data = json.loads(processed_text)
-
-            # Format and display the properly formatted JSON
-            formatted_json = json.dumps(config_data, indent=2)
-            self.config_text.delete("1.0", tk.END)
-            self.config_text.insert("1.0", formatted_json)
-
-            self.process_config(config_data)
-        except json.JSONDecodeError as e:
-            line_no = int(str(e).split('line')[1].split()[0])
-            col_no = int(str(e).split('column')[1].split()[0])
-            error_msg = f"JSON Format Error:\n{str(e)}\n\nPlease check line {line_no}, column {col_no} of your JSON configuration."
-            messagebox.showerror("Error", error_msg)
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to parse configuration: {str(e)}")
-
-
-    def show_text_menu(self, event):
-        """Show the right-click menu for the text area"""
-        try:
-            self.text_menu.tk_popup(event.x_root, event.y_root)
-        finally:
-            self.text_menu.grab_release()
-
-    def paste_text(self):
-        """Paste text from clipboard into the text area"""
-        try:
-            # Try to get clipboard content
-            clipboard_text = self.clipboard_get()
-            self.config_text.insert(tk.INSERT, clipboard_text)
-
-            # Try to parse as JSON, but don't show error if it fails
-            try:
-                if clipboard_text.strip():
-                    config_data = json.loads(clipboard_text)
-                    self.process_config(config_data)
-            except json.JSONDecodeError:
-                # Ignore JSON parsing errors during paste
-                pass
-
-        except tk.TclError:
-            # Ignore clipboard errors
-            pass
-
     def handle_config_drop(self, file_path):
         """Handle dropping a configuration file"""
         try:
@@ -406,12 +350,6 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
                 # Try to parse the configuration
                 config_data = json.loads(processed_text)
-
-                # Format and display the properly formatted JSON
-                formatted_json = json.dumps(config_data, indent=2)
-                self.config_text.delete("1.0", tk.END)
-                self.config_text.insert("1.0", formatted_json)
-
                 self.process_config(config_data)
 
         except json.JSONDecodeError as e:
@@ -463,10 +401,6 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         editor.configure(yscrollcommand=scrollbar.set)
 
-        # Add current content to editor if exists
-        if hasattr(self, 'config_text'):
-            current_text = self.config_text.get("1.0", tk.END)
-            editor.insert("1.0", current_text)
 
         # Layout
         editor.grid(row=0, column=0, sticky="nsew")
@@ -505,14 +439,8 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         try:
             # Validate JSON before applying
             if new_text.strip():
-                json.loads(new_text)
-
-            # Update main window text
-            self.config_text.delete("1.0", tk.END)
-            self.config_text.insert("1.0", new_text)
-
-            # Try to parse configuration
-            self.parse_text_config()
+                config_data = json.loads(new_text)
+                self.process_config(config_data)
 
             # Close popup
             popup.destroy()
