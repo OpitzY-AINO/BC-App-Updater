@@ -76,27 +76,14 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         text_frame = ttk.Frame(config_methods)
         text_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0))
 
-        # Button container
-        button_frame = ttk.Frame(text_frame)
-        button_frame.pack(fill=tk.X, pady=(0, 5))
-
-        # Load from File button
-        load_btn = ttk.Button(
-            button_frame,
-            text="Load from File",
-            command=self.load_config_file,
-            style="Accent.TButton"
-        )
-        load_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 2))
-
         # Clear button
         clear_btn = ttk.Button(
-            button_frame,
+            text_frame,
             text="Clear",
             command=lambda: self.config_text.delete("1.0", tk.END),
             style="Accent.TButton"
         )
-        clear_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(2, 0))
+        clear_btn.pack(fill=tk.X, pady=(0, 5))
 
         self.config_text = scrolledtext.ScrolledText(
             text_frame,
@@ -108,7 +95,6 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         # Create right-click menu for the text area
         self.text_menu = tk.Menu(self, tearoff=0)
-        self.text_menu.add_command(label="Load from File", command=self.load_config_file)
         self.text_menu.add_command(label="Clear", command=lambda: self.config_text.delete("1.0", tk.END))
 
         # Bind right-click menu
@@ -196,10 +182,20 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
                 messagebox.showerror("Error", "Please enter configuration JSON")
                 return
 
+            # Try to parse and format JSON
             config_data = json.loads(config_text)
+
+            # Format and display the properly formatted JSON
+            formatted_json = json.dumps(config_data, indent=2)
+            self.config_text.delete("1.0", tk.END)
+            self.config_text.insert("1.0", formatted_json)
+
             self.process_config(config_data)
         except json.JSONDecodeError as e:
-            messagebox.showerror("Error", "Invalid JSON format. Please check your configuration.")
+            line_no = int(str(e).split('line')[1].split()[0])
+            col_no = int(str(e).split('column')[1].split()[0])
+            error_msg = f"JSON Format Error:\n{str(e)}\n\nPlease check line {line_no}, column {col_no} of your JSON configuration."
+            messagebox.showerror("Error", error_msg)
         except Exception as e:
             messagebox.showerror("Error", f"Failed to parse configuration: {str(e)}")
 
