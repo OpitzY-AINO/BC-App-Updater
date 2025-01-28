@@ -82,16 +82,15 @@ def apply_styles(root):
         borderwidth=0
     )
 
-    # Configure modern button styles with larger size
+    # Configure modern button styles
     style.configure(
         "Accent.TButton",
         background=colors['primary'],
         foreground=colors['bg_dark'],
-        font=("Segoe UI", 11, "bold"),  # Increased font size
-        padding=(20, 10),  # Increased padding
+        font=("Segoe UI", 10, "bold"),
+        padding=(20, 10),
         relief="flat",
-        borderwidth=0,
-        width=20  # Increased minimum width for buttons
+        borderwidth=0
     )
 
     style.map(
