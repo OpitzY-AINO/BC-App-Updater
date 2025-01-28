@@ -138,6 +138,12 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.servers_canvas.bind('<Configure>', lambda e: self.servers_canvas.itemconfig(
             self.canvas_window, width=e.width))
 
+        # Add mouse wheel scrolling
+        def _on_mousewheel(event):
+            self.servers_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+
+        self.servers_canvas.bind_all("<MouseWheel>", _on_mousewheel)
+
         # Create the canvas window with proper width
         self.canvas_window = self.servers_canvas.create_window(
             (0, 0),
@@ -268,7 +274,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             frame = ttk.Frame(self.servers_frame, style="ServerList.TFrame")
             frame.pack(fill=tk.X, pady=5, padx=5)
 
-            var = tk.BooleanVar(value=True)
+            var = tk.BooleanVar(value=False)  # Changed initial value to False
             cb = ttk.Checkbutton(frame, variable=var, style="ServerList.TCheckbutton")
             cb.pack(side=tk.LEFT)
 
