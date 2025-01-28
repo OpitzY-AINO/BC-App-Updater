@@ -23,12 +23,20 @@ def preprocess_json_text(json_text):
     processed_text = json_text.replace(",]", "]").replace(",}", "}")
     processed_text = processed_text.replace(",\n]", "\n]").replace(",\n}", "\n}")
 
+    try:
+        # Try to parse as JSON first
+        config = json.loads(processed_text)
+        # If it's already a valid configuration object (has version and configurations)
+        if isinstance(config, dict) and 'version' in config and 'configurations' in config:
+            return processed_text
+    except json.JSONDecodeError:
+        pass
+
     # Check if we have multiple objects without array brackets
     stripped = processed_text.strip()
-    if stripped.count('{') > 1:  # Multiple objects detected
-        if not (stripped.startswith('[') and stripped.endswith(']')):
-            # Wrap in array brackets if not already wrapped
-            processed_text = f'[{processed_text}]'
+    if stripped.count('{') > 1 and not (stripped.startswith('[') and stripped.endswith(']')):
+        # Wrap in array brackets if not already wrapped and contains multiple objects
+        processed_text = f'[{processed_text}]'
 
     return processed_text
 
