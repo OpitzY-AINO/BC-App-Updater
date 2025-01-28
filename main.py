@@ -141,6 +141,9 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             height=10
         )
 
+        # Configure tag for checked rows
+        self.server_tree.tag_configure("checked", background='#313244')  # Use hover color for checked rows
+
         # Configure columns
         self.server_tree.heading("selected", text=get_text('col_select'), anchor="center")
         self.server_tree.heading("type", text=get_text('col_type'), anchor="center")
@@ -329,7 +332,10 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
                 current_values = self.server_tree.item(item)['values']
                 new_values = list(current_values)
                 new_values[0] = "☑" if current_values[0] == "☐" else "☐"
-                self.server_tree.item(item, values=new_values)
+
+                # Update both values and tags
+                tags = ("checked",) if new_values[0] == "☑" else ()
+                self.server_tree.item(item, values=new_values, tags=tags)
 
                 # Update publish button state
                 self.update_publish_button_state()
@@ -372,11 +378,12 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             else:  # OnPrem
                 environment = config['serverInstance']
 
-            # Insert item with checkbox (using larger symbols for better visibility)
+            # Insert item with checkbox
+            item_id = f"server_{i}"
             self.server_tree.insert(
                 "",
                 tk.END,
-                f"server_{i}",
+                item_id,
                 values=("☐", env_type, name, environment)
             )
 
@@ -411,6 +418,15 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         popup.geometry("800x600")
         popup.minsize(600, 400)
         popup.transient(self)
+
+        # Center the popup window on the screen
+        window_width = 800
+        window_height = 600
+        screen_width = popup.winfo_screenwidth()
+        screen_height = popup.winfo_screenheight()
+        center_x = int((screen_width - window_width) / 2)
+        center_y = int((screen_height - window_height) / 2)
+        popup.geometry(f"{window_width}x{window_height}+{center_x}+{center_y}")
 
         # Configure popup grid
         popup.grid_rowconfigure(0, weight=1)
@@ -476,7 +492,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             style="Accent.TButton",
             command=popup.destroy
         )
-        close_btn.grid(row=0, column=2, sticky="e")
+        close_btn.grid(row=0, column=2, sticky="e", padx=(10, 0))  # Added padx for spacing
 
         # Configure button frame grid
         button_frame.grid_columnconfigure(1, weight=1)

@@ -160,15 +160,19 @@ def apply_styles(root):
     style.map(
         "ServerList.Treeview",
         background=[
-            ("selected", colors['hover']),
-            ("active", colors['active'])
+            ("selected", colors['hover']),  # Nice grey for mouse selection
+            ("active", colors['active'])    # Slightly darker for active state
         ],
         foreground=[
-            ("selected", colors['text']),
+            ("selected", colors['text']),   # Keep text color consistent
             ("active", colors['text'])
         ],
         fieldbackground=[("!disabled", colors['bg_darker'])]  # Windows-specific fix
     )
+
+    # Configure tag for checked rows
+    style.configure("ServerList.Treeview.Checked", background=colors['hover'], foreground=colors['text'])
+
 
     # Configure Treeview heading style
     style.configure(
@@ -178,11 +182,6 @@ def apply_styles(root):
         relief="flat",
         borderwidth=0,
         font=("Segoe UI", 12, "bold")
-    )
-
-    style.map(
-        "ServerList.Treeview.Heading",
-        background=[("active", colors['hover'])]
     )
 
     # Configure Canvas background
@@ -240,3 +239,11 @@ def apply_styles(root):
     root.option_add("*ScrolledText.selectBackground", colors['primary'])
     root.option_add("*ScrolledText.selectForeground", colors['bg_dark'])
     root.option_add("*ScrolledText.insertBackground", colors['text'])
+
+    style.configure(
+        "Header.TLabel",
+        background=colors['bg_dark'],
+        foreground=colors['text'],
+        font=("Segoe UI", 24, "bold"),  # Increased from 16 to 24
+        padding=(0, 10)
+    )
