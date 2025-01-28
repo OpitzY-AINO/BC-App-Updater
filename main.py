@@ -43,6 +43,8 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.grid_columnconfigure(0, weight=1)
 
         self.setup_ui()
+        
+        self.center_window(self)
 
         # Load saved configurations
         self.update_server_list()
@@ -192,6 +194,14 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             style="Accent.TButton"
         )
         self.publish_button.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(10, 10))
+        
+    def center_window(self, window):
+        window.update_idletasks()
+        width = window.winfo_width()
+        height = window.winfo_height()
+        x = (window.winfo_screenwidth() // 2) - (width // 2)
+        y = (window.winfo_screenheight() // 2) - (height // 2)
+        window.geometry(f'{width}x{height}+{x}+{y}')
 
     def publish_extension(self):
         """Handle the publish button click event"""
@@ -228,9 +238,8 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             progress_window = tk.Toplevel(self)
             progress_window.title(get_text('deployment_progress'))
             progress_window.geometry("400x300")
-            progress_window.transient(self)
-            progress_window.grab_set()
-
+            self.center_window(progress_window)
+            
             # Configure progress window
             progress_frame = ttk.Frame(progress_window, padding="20", style="Card.TFrame")
             progress_frame.pack(fill=tk.BOTH, expand=True)
@@ -410,7 +419,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         popup.title(get_text('config_editor'))
         popup.geometry("800x600")
         popup.minsize(600, 400)
-        popup.transient(self)
+        self.center_window(popup)
 
         # Configure popup grid
         popup.grid_rowconfigure(0, weight=1)
@@ -550,8 +559,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         progress_window = tk.Toplevel(self)
         progress_window.title(get_text('connection_test_progress'))
         progress_window.geometry("400x300")
-        progress_window.transient(self)
-        progress_window.grab_set()
+        self.center_window(progress_window)
 
         # Configure progress window
         progress_frame = ttk.Frame(progress_window, padding="20", style="Card.TFrame")
