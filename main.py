@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, messagebox, scrolledtext
+from tkinter import ttk, messagebox, scrolledtext, filedialog
 from tkinterdnd2 import DND_FILES, TkinterDnD
 import json
 from ui.drag_drop import DragDropZone
@@ -76,6 +76,28 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         text_frame = ttk.Frame(config_methods)
         text_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0))
 
+        # Button container
+        button_frame = ttk.Frame(text_frame)
+        button_frame.pack(fill=tk.X, pady=(0, 5))
+
+        # Load from File button
+        load_btn = ttk.Button(
+            button_frame,
+            text="Load from File",
+            command=self.load_config_file,
+            style="Accent.TButton"
+        )
+        load_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 2))
+
+        # Clear button
+        clear_btn = ttk.Button(
+            button_frame,
+            text="Clear",
+            command=lambda: self.config_text.delete("1.0", tk.END),
+            style="Accent.TButton"
+        )
+        clear_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(2, 0))
+
         self.config_text = scrolledtext.ScrolledText(
             text_frame,
             height=8,
@@ -86,7 +108,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         # Create right-click menu for the text area
         self.text_menu = tk.Menu(self, tearoff=0)
-        self.text_menu.add_command(label="Paste", command=self.paste_text)
+        self.text_menu.add_command(label="Load from File", command=self.load_config_file)
         self.text_menu.add_command(label="Clear", command=lambda: self.config_text.delete("1.0", tk.END))
 
         # Bind right-click menu
@@ -255,6 +277,33 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             messagebox.showinfo("Success", "Publishing completed successfully")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to publish: {str(e)}")
+
+    def load_config_file(self):
+        """Load configuration from a JSON file"""
+        file_path = filedialog.askopenfilename(
+            title="Select Configuration File",
+            filetypes=[
+                ("JSON files", "*.json"),
+                ("Text files", "*.txt"),
+                ("All files", "*.*")
+            ]
+        )
+
+        if file_path:
+            try:
+                with open(file_path, 'r') as f:
+                    config_text = f.read()
+
+                # Update text area
+                self.config_text.delete("1.0", tk.END)
+                self.config_text.insert("1.0", config_text)
+
+                # Try to parse the configuration
+                config_data = json.loads(config_text)
+                self.process_config(config_data)
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to load configuration: {str(e)}")
+
 
 if __name__ == "__main__":
     app = BusinessCentralPublisher()
