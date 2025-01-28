@@ -452,8 +452,17 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         """Apply changes from popup editor to main window"""
         try:
             # Validate JSON before applying
-            if new_text.strip():
-                config_data = json.loads(new_text)
+            if not new_text.strip():
+                popup.destroy()
+                return
+
+            config_data = json.loads(new_text)
+
+            # When editing existing configurations, replace them entirely
+            if isinstance(config_data, dict) and 'configurations' in config_data:
+                self.config_manager.replace_configurations(config_data['configurations'])
+            else:
+                # For new configurations (pasted/imported), use normal add process
                 self.process_config(config_data)
 
             # Close popup
