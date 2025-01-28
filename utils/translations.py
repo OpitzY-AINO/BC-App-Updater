@@ -10,13 +10,13 @@ TRANSLATIONS = {
     'parse_config': 'Konfiguration Parsen',
     'server_configs': 'Server-Konfigurationen',
     'publish_button': 'Auf ausgewählte Server veröffentlichen',
-    
+
     # Column headers
     'col_select': 'Auswahl',
     'col_type': 'Typ',
     'col_name': 'Name',
     'col_environment': 'Umgebung / Instanz',
-    
+
     # Messages
     'confirm_deployment': 'Möchten Sie {app_name} auf {count} ausgewählte(n) Server veröffentlichen?',
     'deployment_progress': 'Veröffentlichungsfortschritt',
@@ -28,14 +28,15 @@ TRANSLATIONS = {
     'deployment_complete_with_errors': 'Veröffentlichung mit {count} Fehler(n) abgeschlossen.\nDetails im Fortschrittsfenster prüfen.',
     'all_deployments_successful': 'Alle Veröffentlichungen erfolgreich abgeschlossen!',
     'close': 'Schließen',
-    
+
     # Errors
     'select_app': 'Bitte wählen Sie zuerst eine APP-Datei aus',
     'select_server': 'Bitte wählen Sie mindestens einen Server aus',
     'invalid_app': 'Bitte wählen Sie eine gültige .app-Datei aus',
     'invalid_json': 'Bitte geben Sie eine Konfiguration im JSON-Format ein',
     'json_format_error': 'JSON Format Fehler:\n{error}\n\nBitte überprüfen Sie Zeile {line}, Spalte {col} Ihrer JSON-Konfiguration.',
-    'config_exists': 'Eine Konfiguration mit dem Namen "{name}" existiert bereits.\nMöchten Sie sie überschreiben?'
+    'config_exists': 'Eine Konfiguration mit dem Namen "{name}" existiert bereits.\nMöchten Sie sie überschreiben?',
+    'enter_config': 'Bitte geben Sie eine Konfiguration ein'
 }
 
 def get_text(key: str, **kwargs) -> str:
