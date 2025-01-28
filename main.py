@@ -49,11 +49,16 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             text=get_text('app_title'),
             style="Header.TLabel"
         )
-        header.grid(row=0, column=0, sticky="ew", pady=(0, 20))
+        header.grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 20))
 
-        # Extension File Section with reduced padding
-        app_frame = ttk.LabelFrame(main_frame, text=get_text('extension_file'), padding="10", style="TLabelframe")
-        app_frame.grid(row=1, column=0, sticky="ew", pady=(0, 10))
+        # Top section container for app dropzone and config
+        top_section = ttk.Frame(main_frame, style="TFrame")
+        top_section.grid(row=1, column=0, sticky="nsew", pady=(0, 10))
+        top_section.grid_columnconfigure(1, weight=1)  # Config section takes more space
+
+        # Left side: Extension File Section
+        app_frame = ttk.LabelFrame(top_section, text=get_text('extension_file'), padding="10", style="TLabelframe")
+        app_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
 
         self.app_drop_zone = DragDropZone(
             app_frame,
@@ -61,15 +66,19 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             self.handle_app_drop,
             ['.app']
         )
-        self.app_drop_zone.pack(fill=tk.X, padx=5, pady=5)
+        self.app_drop_zone.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        # Server Configuration Section with reduced padding
-        config_frame = ttk.LabelFrame(main_frame, text=get_text('server_config'), padding="10", style="TLabelframe")
-        config_frame.grid(row=2, column=0, sticky="ew", pady=(0, 10))
+        # Right side: Server Configuration Section
+        config_frame = ttk.LabelFrame(top_section, text=get_text('server_config'), padding="10", style="TLabelframe")
+        config_frame.grid(row=0, column=1, sticky="nsew")
 
-        # Inner frame for drop zone and text area
-        config_inner = ttk.Frame(config_frame, style="TFrame")
-        config_inner.pack(fill=tk.X, expand=True)
+        # Config content container
+        config_content = ttk.Frame(config_frame, style="TFrame")
+        config_content.pack(fill=tk.BOTH, expand=True)
+
+        # Drop zone and text editor side by side
+        config_inner = ttk.Frame(config_content, style="TFrame")
+        config_inner.pack(fill=tk.BOTH, expand=True)
 
         # Left side: Drop zone
         drop_frame = ttk.Frame(config_inner, style="TFrame")
@@ -83,30 +92,9 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         self.config_drop_zone.pack(fill=tk.BOTH, expand=True)
 
-        # Right side: Text input and buttons
+        # Right side: Text editor
         text_frame = ttk.Frame(config_inner, style="TFrame")
         text_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0))
-
-        # Button container with reduced padding
-        button_frame = ttk.Frame(text_frame, style="TFrame")
-        button_frame.pack(fill=tk.X, pady=(0, 5))
-
-        # Clear and Parse buttons
-        clear_btn = ttk.Button(
-            button_frame,
-            text=get_text('clear'),
-            command=self.clear_all,
-            style="Accent.TButton"
-        )
-        clear_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 2))
-
-        parse_btn = ttk.Button(
-            button_frame,
-            text=get_text('parse_config'),
-            command=self.parse_text_config,
-            style="Accent.TButton"
-        )
-        parse_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(2, 0))
 
         # Text area with reduced height
         self.config_text = tk.Text(
@@ -133,6 +121,30 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.config_text.configure(yscrollcommand=text_scrollbar.set)
         self.config_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         text_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # Button container below both sections
+        button_frame = ttk.Frame(config_content, style="TFrame")
+        button_frame.pack(fill=tk.X, pady=(10, 0))
+
+        # Clear and Parse buttons centered
+        button_container = ttk.Frame(button_frame, style="TFrame")
+        button_container.pack(expand=True)
+
+        clear_btn = ttk.Button(
+            button_container,
+            text=get_text('clear'),
+            command=self.clear_all,
+            style="Accent.TButton"
+        )
+        clear_btn.pack(side=tk.LEFT, padx=5)
+
+        parse_btn = ttk.Button(
+            button_container,
+            text=get_text('parse_config'),
+            command=self.parse_text_config,
+            style="Accent.TButton"
+        )
+        parse_btn.pack(side=tk.LEFT, padx=5)
 
         # Server List Section with increased size
         list_frame = ttk.LabelFrame(main_frame, text=get_text('server_configs'), padding="10", style="TLabelframe")
