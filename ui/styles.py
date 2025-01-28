@@ -137,8 +137,8 @@ def apply_styles(root):
     style.configure(
         "ServerList.TFrame",
         background=colors['bg_darker'],
-        relief="solid",
-        borderwidth=1
+        relief="flat",  # Remove border from individual frames
+        borderwidth=0
     )
 
     # Add specific style for server list items
@@ -172,6 +172,25 @@ def apply_styles(root):
     # Configure canvas background for server list
     root.option_add("*Canvas.background", colors['bg_darker'])
     root.option_add("*Canvas.highlightthickness", 0)
+
+    # Configure modern scrollbar style
+    style.configure(
+        "TScrollbar",
+        background=colors['bg_darker'],
+        troughcolor=colors['bg_darker'],
+        borderwidth=0,
+        relief="flat",
+        arrowsize=0,  # Hide arrows
+        width=10  # Thinner scrollbar
+    )
+
+    style.map(
+        "TScrollbar",
+        background=[
+            ("active", colors['active']),
+            ("!active", colors['border'])
+        ]
+    )
 
     style.configure(
         "Canvas.TFrame",

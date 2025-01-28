@@ -124,7 +124,12 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             bd=0,
             background='#181825'  # Match bg_darker color
         )
-        scrollbar = ttk.Scrollbar(self.server_list, orient="vertical", command=self.servers_canvas.yview)
+        scrollbar = ttk.Scrollbar(
+            self.server_list,
+            orient="vertical",
+            command=self.servers_canvas.yview,
+            style="TScrollbar"  # Apply modern scrollbar style
+        )
 
         self.servers_frame = ttk.Frame(self.servers_canvas, style="ServerList.TFrame")
 
