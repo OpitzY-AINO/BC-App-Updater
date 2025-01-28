@@ -5,7 +5,7 @@ import json
 from ui.drag_drop import DragDropZone
 from ui.styles import apply_styles
 from utils.json_parser import parse_server_config
-from utils.powershell_manager import execute_powershell, publish_to_environment # Added publish_to_environment
+from utils.powershell_manager import execute_powershell, publish_to_environment
 from utils.config_manager import ConfigurationManager
 import os
 
@@ -60,6 +60,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.update_server_list()
 
     def setup_ui(self):
+        """Set up the user interface"""
         # Main container with padding
         main_frame = ttk.Frame(self, padding="20", style="TFrame")
         main_frame.pack(fill=tk.BOTH, expand=True)
@@ -163,21 +164,22 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         list_frame = ttk.LabelFrame(main_frame, text="Server Configurations", padding="10", style="TLabelframe")
         list_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 20))
 
-        # Create Treeview for server list
+        # Create Treeview for server list with checkbox column
         self.server_tree = ttk.Treeview(
             list_frame,
-            columns=("type", "name", "environment"),
+            columns=("selected", "type", "name", "environment"),
             show="headings",
-            selectmode="browse",  # Changed to allow selection
             style="ServerList.Treeview"
         )
 
         # Configure columns
+        self.server_tree.heading("selected", text="Select")
         self.server_tree.heading("type", text="Type")
         self.server_tree.heading("name", text="Name")
         self.server_tree.heading("environment", text="Environment / Instance")
 
         # Set column widths
+        self.server_tree.column("selected", width=60, stretch=False)
         self.server_tree.column("type", width=100, stretch=False)
         self.server_tree.column("name", width=200, stretch=True)
         self.server_tree.column("environment", width=300, stretch=True)
@@ -196,31 +198,37 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.server_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0), pady=5)
         tree_scrollbar.pack(side=tk.RIGHT, fill=tk.Y, pady=5)
 
-
-        # Bind click handler
+        # Bind click handler for checkbox column
         self.server_tree.bind('<Button-1>', self.handle_server_click)
+
+        # Create a separate frame for the publish button to ensure proper spacing
+        button_container = ttk.Frame(main_frame, style="TFrame")
+        button_container.pack(fill=tk.X, pady=(0, 20))
 
         # Publish button with accent styling
         self.publish_button = ttk.Button(
-            main_frame,
+            button_container,
             text="Publish to Selected Servers",
             command=self.publish_extension,
-            style="Accent.TButton"
+            style="Accent.TButton",
+            padding=(20, 10)  # Add padding to make button more visible
         )
-        self.publish_button.pack(fill=tk.X)
+        self.publish_button.pack(fill=tk.X, padx=20, pady=10)  # Add padding around the button
+
 
     def handle_server_click(self, event):
         """Handle clicks on server rows"""
         region = self.server_tree.identify_region(event.x, event.y)
         if region == "cell":
+            column = self.server_tree.identify_column(event.x)
             item = self.server_tree.identify_row(event.y)
-            if item:
+
+            if column == "#1" and item:  # Checkbox column
                 # Toggle selection state
-                current_selection = self.server_tree.selection()
-                if item in current_selection:
-                    self.server_tree.selection_remove(item)
-                else:
-                    self.server_tree.selection_add(item)
+                current_values = self.server_tree.item(item)['values']
+                new_values = list(current_values)
+                new_values[0] = "☑" if current_values[0] == "☐" else "☐"
+                self.server_tree.item(item, values=new_values)
 
     def process_config(self, config_data):
         try:
@@ -232,6 +240,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             messagebox.showerror("Error", f"Failed to process configuration: {str(e)}")
 
     def update_server_list(self):
+        """Update the server list with current configurations"""
         # Clear existing items
         for item in self.server_tree.get_children():
             self.server_tree.delete(item)
@@ -247,12 +256,12 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             else:  # OnPrem
                 environment = config['serverInstance']
 
-            # Insert item with the new column structure
+            # Insert item with checkbox
             self.server_tree.insert(
                 "",
                 tk.END,
                 f"server_{i}",
-                values=(env_type, name, environment)
+                values=("☐", env_type, name, environment)
             )
 
     def clear_all(self):
@@ -330,14 +339,23 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             return
 
         # Get selected items from Treeview
-        selected_items = self.server_tree.selection()
-        if not selected_items:
+        selected_items = self.server_tree.get_children()
+        selected_configs = []
+        for item in selected_items:
+            values = self.server_tree.item(item)['values']
+            if values[0] == "☑":
+                index = int(item.split('_')[1])
+                if 0 <= index < len(self.config_manager.get_configurations()):
+                    selected_configs.append(self.config_manager.get_configurations()[index])
+
+
+        if not selected_configs:
             messagebox.showerror("Error", "Please select at least one server")
             return
 
         # Confirm deployment
         app_name = os.path.basename(self.app_file_path)
-        selected_count = len(selected_items)
+        selected_count = len(selected_configs)
         if not messagebox.askyesno(
             "Confirm Deployment",
             f"Deploy {app_name} to {selected_count} selected server(s)?",
@@ -345,7 +363,6 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             return
 
         # Map selected items back to configurations
-        all_configs = self.config_manager.get_configurations()
         deployment_results = []
 
         try:
@@ -387,18 +404,15 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
                 progress_text.update()
 
             # Deploy to each selected server
-            for item in selected_items:
-                index = int(item.split('_')[1])
-                if 0 <= index < len(all_configs):
-                    config = all_configs[index]
-                    update_progress(f"\nDeploying to {config['name']}...")
+            for config in selected_configs:
+                update_progress(f"\nDeploying to {config['name']}...")
 
-                    success, message = publish_to_environment(self.app_file_path, config)
-                    deployment_results.append((config['name'], success, message))
+                success, message = publish_to_environment(self.app_file_path, config)
+                deployment_results.append((config['name'], success, message))
 
-                    # Update progress with result
-                    status = "✓" if success else "✗"
-                    update_progress(f"{status} {message}")
+                # Update progress with result
+                status = "✓" if success else "✗"
+                update_progress(f"{status} {message}")
 
             # Show final summary
             update_progress("\n=== Deployment Summary ===")

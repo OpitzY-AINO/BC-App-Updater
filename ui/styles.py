@@ -140,7 +140,8 @@ def apply_styles(root):
         foreground=colors['text'],
         fieldbackground=colors['bg_darker'],
         borderwidth=0,
-        font=("Segoe UI", 10)
+        font=("Segoe UI", 10),
+        rowheight=30  # Increase row height for better checkbox visibility
     )
 
     style.configure(
@@ -154,8 +155,14 @@ def apply_styles(root):
     # Configure Treeview selection colors
     style.map(
         "ServerList.Treeview",
-        background=[("selected", colors['hover'])],
-        foreground=[("selected", colors['primary'])]
+        background=[
+            ("selected", colors['hover']),
+            ("!selected", colors['bg_darker'])
+        ],
+        foreground=[
+            ("selected", colors['primary']),
+            ("!selected", colors['text'])
+        ]
     )
 
     # Configure Canvas background for server list
