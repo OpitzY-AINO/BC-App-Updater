@@ -160,13 +160,14 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         button_container = ttk.Frame(list_frame, style="TFrame")
         button_container.grid(row=1, column=0, sticky="ew", pady=(10, 0))
 
-        test_connection_btn = ttk.Button(
+        self.test_connection_btn = ttk.Button(
             button_container,
             text=get_text('test_connection'),
             command=self.test_selected_connections,
+            state="disabled",  # Initially disabled
             style="Accent.TButton"
         )
-        test_connection_btn.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        self.test_connection_btn.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
         # Publish Button Section
         button_container = ttk.Frame(main_frame, style="TFrame")
@@ -324,14 +325,16 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
                 self.update_publish_button_state()
 
     def update_publish_button_state(self):
-        """Update publish button state based on selections"""
+        """Update publish button and test connection button states based on selections"""
         has_selection = False
         for item in self.server_tree.get_children():
             if self.server_tree.item(item)['values'][0] == "☑":
                 has_selection = True
                 break
 
-        self.publish_button.configure(state="normal" if has_selection else "disabled")
+        new_state = "normal" if has_selection else "disabled"
+        self.publish_button.configure(state=new_state)
+        self.test_connection_btn.configure(state=new_state)
 
     def process_config(self, config_data):
         try:
