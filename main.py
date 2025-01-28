@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, scrolledtext
 from tkinterdnd2 import DND_FILES, TkinterDnD
 import json
 from ui.drag_drop import DragDropZone
@@ -13,7 +13,8 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         super().__init__()
 
         self.title("Business Central Extension Publisher")
-        self.geometry("800x600")
+        self.geometry("900x700")
+        self.minsize(800, 600)
 
         # Application state
         self.app_file_path = None
@@ -23,40 +24,93 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         apply_styles(self)
 
     def setup_ui(self):
-        # Main container
-        main_frame = ttk.Frame(self, padding="10")
+        # Main container with padding
+        main_frame = ttk.Frame(self, padding="20")
         main_frame.pack(fill=tk.BOTH, expand=True)
 
-        # App file drop zone
-        self.app_drop_zone = DragDropZone(
+        # Header
+        header = ttk.Label(
             main_frame,
+            text="Business Central Extension Publisher",
+            style="Header.TLabel"
+        )
+        header.pack(fill=tk.X, pady=(0, 20))
+
+        # Top section for file uploads
+        top_frame = ttk.Frame(main_frame)
+        top_frame.pack(fill=tk.X, pady=(0, 20))
+
+        # App file drop zone in its own frame
+        app_frame = ttk.LabelFrame(top_frame, text="Extension File", padding="10")
+        app_frame.pack(fill=tk.X, pady=(0, 10))
+
+        self.app_drop_zone = DragDropZone(
+            app_frame,
             "Drop .app file here\nor click to browse",
             self.handle_app_drop,
             ['.app']
         )
-        self.app_drop_zone.pack(fill=tk.X, pady=(0, 10))
+        self.app_drop_zone.pack(fill=tk.X)
 
-        # Config file drop zone
+        # Server configuration section
+        config_frame = ttk.LabelFrame(main_frame, text="Server Configuration", padding="10")
+        config_frame.pack(fill=tk.X, pady=(0, 20))
+
+        # Config input methods container
+        config_methods = ttk.Frame(config_frame)
+        config_methods.pack(fill=tk.X)
+
+        # Left side: Drop zone
+        drop_frame = ttk.Frame(config_methods)
+        drop_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 5))
+
         self.config_drop_zone = DragDropZone(
-            main_frame,
-            "Drop server config JSON here\nor paste configuration",
+            drop_frame,
+            "Drop server config JSON here\nor click to browse",
             self.handle_config_drop,
             ['.json']
         )
-        self.config_drop_zone.pack(fill=tk.X, pady=(0, 10))
+        self.config_drop_zone.pack(fill=tk.BOTH, expand=True)
 
-        # Server list frame
-        list_frame = ttk.LabelFrame(main_frame, text="Server Configurations", padding="5")
-        list_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
+        # Right side: Text input
+        text_frame = ttk.Frame(config_methods)
+        text_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0))
 
-        # Scrollable server list
-        self.server_list = ttk.Frame(list_frame)
+        self.config_text = scrolledtext.ScrolledText(
+            text_frame,
+            height=8,
+            width=40,
+            font=("Consolas", 10)
+        )
+        self.config_text.pack(fill=tk.BOTH, expand=True)
+
+        # Parse button
+        parse_btn = ttk.Button(
+            text_frame,
+            text="Parse Configuration",
+            command=self.parse_text_config,
+            style="Accent.TButton"
+        )
+        parse_btn.pack(fill=tk.X, pady=(5, 0))
+
+        # Server list section
+        list_frame = ttk.LabelFrame(main_frame, text="Server Configurations", padding="10")
+        list_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 20))
+
+        # Server list with modern styling
+        self.server_list = ttk.Frame(list_frame, style="ServerList.TFrame")
         self.server_list.pack(fill=tk.BOTH, expand=True)
 
+        # Scrollable server list
         scrollbar = ttk.Scrollbar(self.server_list)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        self.servers_canvas = tk.Canvas(self.server_list, yscrollcommand=scrollbar.set)
+        self.servers_canvas = tk.Canvas(
+            self.server_list,
+            yscrollcommand=scrollbar.set,
+            background='#ffffff',
+            highlightthickness=0
+        )
         self.servers_frame = ttk.Frame(self.servers_canvas)
 
         scrollbar.config(command=self.servers_canvas.yview)
@@ -72,12 +126,26 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.publish_button = ttk.Button(
             main_frame,
             text="Publish to Selected Servers",
-            command=self.publish_extension
+            command=self.publish_extension,
+            style="Accent.TButton"
         )
         self.publish_button.pack(fill=tk.X)
 
         # Bind paste event
         self.bind('<Control-v>', self.handle_paste)
+
+    def parse_text_config(self):
+        """Parse configuration from text input"""
+        try:
+            config_text = self.config_text.get("1.0", tk.END).strip()
+            if not config_text:
+                messagebox.showerror("Error", "Please enter configuration JSON")
+                return
+
+            config_data = json.loads(config_text)
+            self.process_config(config_data)
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to parse configuration: {str(e)}")
 
     def handle_app_drop(self, file_path):
         if file_path.lower().endswith('.app'):
@@ -91,12 +159,19 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             with open(file_path, 'r') as f:
                 config_data = json.load(f)
             self.process_config(config_data)
+
+            # Show the config in the text area
+            self.config_text.delete("1.0", tk.END)
+            self.config_text.insert("1.0", json.dumps(config_data, indent=2))
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load configuration: {str(e)}")
 
     def handle_paste(self, event):
         try:
             clipboard = self.clipboard_get()
+            self.config_text.delete("1.0", tk.END)
+            self.config_text.insert("1.0", clipboard)
+
             config_data = json.loads(clipboard)
             self.process_config(config_data)
         except Exception as e:
@@ -115,10 +190,10 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         for widget in self.servers_frame.winfo_children():
             widget.destroy()
 
-        # Add new items
+        # Add new items with modern styling
         for config in self.server_configs:
             frame = ttk.Frame(self.servers_frame)
-            frame.pack(fill=tk.X, pady=2)
+            frame.pack(fill=tk.X, pady=5, padx=5)
 
             var = tk.BooleanVar(value=True)
             cb = ttk.Checkbutton(frame, variable=var)
