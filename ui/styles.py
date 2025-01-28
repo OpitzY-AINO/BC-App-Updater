@@ -82,14 +82,13 @@ def apply_styles(root):
         borderwidth=0
     )
 
-    # Configure modern button styles with consistent width
+    # Configure modern button styles
     style.configure(
         "Accent.TButton",
         background=colors['primary'],
         foreground=colors['bg_dark'],
         font=("Segoe UI", 10, "bold"),
-        padding=(15, 8),  # Reduced horizontal padding for more compact buttons
-        width=12,        # Fixed width for consistency
+        padding=(30, 8),  # Further increased horizontal padding for wider buttons
         relief="flat",
         borderwidth=0
     )
@@ -98,11 +97,11 @@ def apply_styles(root):
         "Accent.TButton",
         background=[
             ("active", colors['accent']),
-            ("disabled", colors['bg_darker'])  # Darker grey when disabled
+            ("disabled", colors['bg_darker'])
         ],
         foreground=[
             ("active", colors['bg_dark']),
-            ("disabled", colors['text_secondary'])  # Secondary text color when disabled
+            ("disabled", colors['text_secondary'])
         ]
     )
 

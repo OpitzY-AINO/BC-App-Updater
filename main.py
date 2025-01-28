@@ -73,9 +73,9 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         config_frame = ttk.LabelFrame(main_frame, text=get_text('server_config'), padding="10", style="TLabelframe")
         config_frame.grid(row=2, column=0, sticky="ew", pady=(0, 10))
 
-        # Inner frame for drop zone and text area with consistent padding
+        # Inner frame for drop zone and text area
         config_inner = ttk.Frame(config_frame, style="TFrame")
-        config_inner.pack(fill=tk.X, expand=True, padx=5)  # Added padding
+        config_inner.pack(fill=tk.X, expand=True)  
 
         # Left side: Drop zone
         drop_frame = ttk.Frame(config_inner, style="TFrame")
