@@ -419,6 +419,33 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             # Ignore clipboard errors
             pass
 
+    def handle_config_drop(self, file_path):
+        """Handle dropping a configuration file"""
+        try:
+            with open(file_path, 'r') as f:
+                config_text = f.read()
+
+                # Preprocess the JSON text
+                processed_text = preprocess_json_text(config_text)
+
+                # Try to parse the configuration
+                config_data = json.loads(processed_text)
+
+                # Format and display the properly formatted JSON
+                formatted_json = json.dumps(config_data, indent=2)
+                self.config_text.delete("1.0", tk.END)
+                self.config_text.insert("1.0", formatted_json)
+
+                self.process_config(config_data)
+
+        except json.JSONDecodeError as e:
+            line_no = int(str(e).split('line')[1].split()[0])
+            col_no = int(str(e).split('column')[1].split()[0])
+            error_msg = get_text('json_format_error', error=str(e), line=line_no, col=col_no)
+            messagebox.showerror("Error", error_msg)
+        except Exception as e:
+            messagebox.showerror("Error", get_text('invalid_json'))
+
 
 def preprocess_json_text(json_text):
     """
