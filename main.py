@@ -42,6 +42,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         # Configure grid weights for main_frame
         main_frame.grid_rowconfigure(3, weight=3)  # Server list row
         main_frame.grid_columnconfigure(0, weight=1)
+        main_frame.grid_columnconfigure(1, weight=1)
 
         # Header
         header = ttk.Label(
@@ -51,14 +52,9 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         header.grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 20))
 
-        # Top section container for app dropzone and config
-        top_section = ttk.Frame(main_frame, style="TFrame")
-        top_section.grid(row=1, column=0, sticky="nsew", pady=(0, 10))
-        top_section.grid_columnconfigure(1, weight=1)  # Config section takes more space
-
-        # Left side: Extension File Section
-        app_frame = ttk.LabelFrame(top_section, text=get_text('extension_file'), padding="10", style="TLabelframe")
-        app_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
+        # Left side: Extension File Section (takes up left half)
+        app_frame = ttk.LabelFrame(main_frame, text=get_text('extension_file'), padding="10", style="TLabelframe")
+        app_frame.grid(row=1, column=0, sticky="nsew", padx=(0, 10))
 
         self.app_drop_zone = DragDropZone(
             app_frame,
@@ -69,8 +65,8 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.app_drop_zone.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         # Right side: Server Configuration Section
-        config_frame = ttk.LabelFrame(top_section, text=get_text('server_config'), padding="10", style="TLabelframe")
-        config_frame.grid(row=0, column=1, sticky="nsew")
+        config_frame = ttk.LabelFrame(main_frame, text=get_text('server_config'), padding="10", style="TLabelframe")
+        config_frame.grid(row=1, column=1, sticky="nsew")
 
         # Config content container
         config_content = ttk.Frame(config_frame, style="TFrame")
@@ -82,7 +78,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         # Left side: Drop zone
         drop_frame = ttk.Frame(config_inner, style="TFrame")
-        drop_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 5))
+        drop_frame.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 5))
 
         self.config_drop_zone = DragDropZone(
             drop_frame,
@@ -96,7 +92,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         text_frame = ttk.Frame(config_inner, style="TFrame")
         text_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0))
 
-        # Text area with reduced height
+        # Text area
         self.config_text = tk.Text(
             text_frame,
             height=6,
@@ -122,8 +118,8 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.config_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         text_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        # Button container below both sections
-        button_frame = ttk.Frame(config_content, style="TFrame")
+        # Button container below config section
+        button_frame = ttk.Frame(config_frame, style="TFrame")
         button_frame.pack(fill=tk.X, pady=(10, 0))
 
         # Clear and Parse buttons centered
@@ -148,10 +144,10 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         # Server List Section with increased size
         list_frame = ttk.LabelFrame(main_frame, text=get_text('server_configs'), padding="10", style="TLabelframe")
-        list_frame.grid(row=3, column=0, sticky="nsew", pady=(0, 10))
+        list_frame.grid(row=2, column=0, columnspan=2, sticky="nsew", pady=(10, 10))
 
         # Configure grid weights to give more space to the server list
-        main_frame.grid_rowconfigure(3, weight=3)  # Increased weight for server list
+        main_frame.grid_rowconfigure(2, weight=3)  # Increased weight for server list
         list_frame.grid_rowconfigure(0, weight=1)
         list_frame.grid_columnconfigure(0, weight=1)
 
@@ -196,7 +192,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         # Publish Button Section
         button_container = ttk.Frame(main_frame, style="TFrame")
-        button_container.grid(row=4, column=0, sticky="ew", pady=(0, 10))
+        button_container.grid(row=3, column=0, columnspan=2, sticky="ew", pady=(0, 10))
 
         self.publish_button = ttk.Button(
             button_container,
