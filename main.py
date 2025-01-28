@@ -465,6 +465,9 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
                 # For new configurations (pasted/imported), use normal add process
                 self.process_config(config_data)
 
+            # Update the server list to reflect changes
+            self.update_server_list()
+
             # Close popup
             popup.destroy()
 
