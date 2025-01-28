@@ -1,5 +1,5 @@
-import tkinter as tk
 from tkinter import ttk
+import tkinter as tk
 
 def apply_styles(root):
     """Apply custom dark mode styles to the application"""
@@ -88,7 +88,7 @@ def apply_styles(root):
         background=colors['primary'],
         foreground=colors['bg_dark'],
         font=("Segoe UI", 10, "bold"),
-        padding=(30, 8),  # Further increased horizontal padding for wider buttons
+        padding=(20, 10),
         relief="flat",
         borderwidth=0
     )
@@ -97,15 +97,45 @@ def apply_styles(root):
         "Accent.TButton",
         background=[
             ("active", colors['accent']),
-            ("disabled", colors['bg_darker'])
+            ("disabled", colors['bg_darker'])  # Darker grey when disabled
         ],
         foreground=[
             ("active", colors['bg_dark']),
-            ("disabled", colors['text_secondary'])
+            ("disabled", colors['text_secondary'])  # Secondary text color when disabled
         ]
     )
 
-    # Configure Treeview styles with consistent row height and font size
+    # Configure checkbox styles
+    style.configure(
+        "TCheckbutton",
+        background=colors['bg_dark'],
+        foreground=colors['text'],
+        font=("Segoe UI", 10)
+    )
+
+    style.map(
+        "TCheckbutton",
+        background=[("active", colors['bg_dark'])],
+        foreground=[("active", colors['primary'])]
+    )
+
+    # Configure label styles
+    style.configure(
+        "TLabel",
+        background=colors['bg_dark'],
+        foreground=colors['text'],
+        font=("Segoe UI", 10)
+    )
+
+    style.configure(
+        "Header.TLabel",
+        background=colors['bg_dark'],
+        foreground=colors['text'],
+        font=("Segoe UI", 16, "bold"),
+        padding=(0, 10)
+    )
+
+    # Configure Treeview styles - removed borders
     style.configure(
         "ServerList.Treeview",
         background=colors['bg_darker'],
