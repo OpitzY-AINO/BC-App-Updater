@@ -31,8 +31,9 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         apply_styles(self)
 
     def setup_ui(self):
+        """Set up the main UI components"""
         # Main container with padding
-        main_frame = ttk.Frame(self, padding="30")
+        main_frame = ttk.Frame(self, style="Modern.TFrame", padding="30")
         main_frame.pack(fill=tk.BOTH, expand=True)
 
         # Header
@@ -44,11 +45,16 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         header.pack(fill=tk.X, pady=(0, 30))
 
         # Top section for file uploads
-        top_frame = ttk.Frame(main_frame)
+        top_frame = ttk.Frame(main_frame, style="Modern.TFrame")
         top_frame.pack(fill=tk.X, pady=(0, 25))
 
         # App file drop zone in its own frame
-        app_frame = ttk.LabelFrame(top_frame, text="Extension File", padding="15")
+        app_frame = ttk.LabelFrame(
+            top_frame,
+            text="Extension File",
+            padding="15",
+            style="Modern.TLabelframe"
+        )
         app_frame.pack(fill=tk.X, pady=(0, 15))
 
         self.app_drop_zone = DragDropZone(
@@ -60,15 +66,20 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.app_drop_zone.pack(fill=tk.X, padx=15, pady=15)
 
         # Server configuration section
-        config_frame = ttk.LabelFrame(main_frame, text="Server Configuration", padding="15")
+        config_frame = ttk.LabelFrame(
+            main_frame,
+            text="Server Configuration",
+            padding="15",
+            style="Modern.TLabelframe"
+        )
         config_frame.pack(fill=tk.X, pady=(0, 25))
 
         # Config input methods container
-        config_methods = ttk.Frame(config_frame)
+        config_methods = ttk.Frame(config_frame, style="Modern.TFrame")
         config_methods.pack(fill=tk.X, padx=15, pady=10)
 
         # Left side: Drop zone
-        drop_frame = ttk.Frame(config_methods)
+        drop_frame = ttk.Frame(config_methods, style="Modern.TFrame")
         drop_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
 
         self.config_drop_zone = DragDropZone(
@@ -80,11 +91,11 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.config_drop_zone.pack(fill=tk.BOTH, expand=True)
 
         # Right side: Text input
-        text_frame = ttk.Frame(config_methods)
+        text_frame = ttk.Frame(config_methods, style="Modern.TFrame")
         text_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(10, 0))
 
         # Buttons container
-        button_frame = ttk.Frame(text_frame)
+        button_frame = ttk.Frame(text_frame, style="Modern.TFrame")
         button_frame.pack(fill=tk.X, pady=(0, 10))
 
         # Clear button
@@ -105,7 +116,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         parse_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(5, 0))
 
-        # Configure text widget with dark theme
+        # Configure text widget
         self.config_text = scrolledtext.ScrolledText(
             text_frame,
             height=8,
@@ -113,12 +124,17 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         self.config_text.pack(fill=tk.BOTH, expand=True)
 
-        # Server list section
-        list_frame = ttk.LabelFrame(main_frame, text="Server Configurations", padding="15")
+        # Server list section with modern styling
+        list_frame = ttk.LabelFrame(
+            main_frame,
+            text="Server Configurations",
+            padding="15",
+            style="Modern.TLabelframe"
+        )
         list_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 25))
 
-        # Server list with modern styling
-        self.server_list = ttk.Frame(list_frame, style="ServerList.TFrame")
+        # Server list container
+        self.server_list = ttk.Frame(list_frame, style="Modern.TFrame")
         self.server_list.pack(fill=tk.BOTH, expand=True, padx=15, pady=10)
 
         # Scrollable server list
@@ -128,16 +144,17 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.servers_canvas = tk.Canvas(
             self.server_list,
             yscrollcommand=scrollbar.set,
-            highlightthickness=0
+            highlightthickness=0,
+            bg=self.dark_colors['bg_darker']
         )
-        self.servers_frame = ttk.Frame(self.servers_canvas)
+        self.servers_frame = ttk.Frame(self.servers_canvas, style="Modern.TFrame")
 
         scrollbar.config(command=self.servers_canvas.yview)
 
         self.servers_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         self.servers_canvas.create_window((0, 0), window=self.servers_frame, anchor='nw')
 
-        # Update server list scrolling
+        # Configure scrolling
         def on_frame_configure(event):
             self.servers_canvas.configure(scrollregion=self.servers_canvas.bbox('all'))
             canvas_width = event.width
@@ -267,54 +284,64 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             messagebox.showerror("Error", error_msg)
 
     def update_server_list(self):
-        """Update the server list display"""
+        """Update the server list display with simplified modern styling"""
         # Clear existing items
         for widget in self.servers_frame.winfo_children():
             widget.destroy()
 
-        # Configure canvas and frame styling
+        # Configure container styling
         self.servers_canvas.configure(
-            bg=self.dark_colors['bg_lighter'],
+            bg=self.dark_colors['bg_dark'],
             highlightthickness=0
         )
-        self.servers_frame.configure(style="ServerList.TFrame")
 
-        print(f"Updating server list with {len(self.server_configs)} configurations")
-
-        # Add new items with modern styling
         for config in self.server_configs:
-            frame = ttk.Frame(self.servers_frame, style="ServerList.TFrame")
-            frame.pack(fill=tk.X, pady=5, padx=15)
+            # Create server item container
+            item_frame = ttk.Frame(self.servers_frame, style="ServerItem.TFrame")
+            item_frame.pack(fill=tk.X, padx=10, pady=5)
 
-            # Initialize checkbox as unchecked
+            # Checkbox (initially unchecked)
             var = tk.BooleanVar(value=False)
-            cb = ttk.Checkbutton(frame, variable=var)
-            cb.pack(side=tk.LEFT)
-
-            # Create display text based on environment type
-            display_text = config['name']
-            if config['environmentType'].lower() == 'sandbox':
-                display_text += f" ({config['environmentName']})"
-            elif config['environmentType'].lower() == 'onprem':
-                display_text += f" ({config['serverInstance']}@{config['server']})"
-
-            name_label = ttk.Label(
-                frame,
-                text=display_text,
-                style="TLabel"
+            cb = ttk.Checkbutton(
+                item_frame,
+                variable=var,
+                style="Server.TCheckbutton"
             )
-            name_label.pack(side=tk.LEFT, padx=10)
+            cb.pack(side=tk.LEFT, padx=(10, 15), pady=10)
 
+            # Server info container
+            info_container = ttk.Frame(item_frame, style="ServerInfo.TFrame")
+            info_container.pack(side=tk.LEFT, fill=tk.X, expand=True, pady=5)
+
+            # Server name with icon
+            env_type = config['environmentType'].lower()
+            icon = "🌐" if env_type == "sandbox" else "💻"
+            name = ttk.Label(
+                info_container,
+                text=f"{icon} {config['name']}",
+                style="ServerName.TLabel"
+            )
+            name.pack(anchor=tk.W)
+
+            # Server details
+            details = (
+                f"Environment: {config['environmentName']}"
+                if env_type == "sandbox"
+                else f"Server: {config['serverInstance']}@{config['server']}"
+            )
+            details_label = ttk.Label(
+                info_container,
+                text=details,
+                style="ServerDetails.TLabel"
+            )
+            details_label.pack(anchor=tk.W)
+
+            # Store checkbox variable
             config['checkbox_var'] = var
 
-            print(f"Added server list item: {display_text}")
-
-        # Update canvas scroll region
+        # Update scroll region
         self.servers_frame.update_idletasks()
         self.servers_canvas.configure(scrollregion=self.servers_canvas.bbox('all'))
-
-        # Ensure the changes are visible
-        self.servers_frame.update()
 
     def publish_extension(self):
         if not self.app_file_path:
