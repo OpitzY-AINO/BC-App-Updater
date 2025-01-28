@@ -228,8 +228,6 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
                 progress_frame,
                 height=10,
                 font=("Consolas", 10),
-                bg='#181825',
-                fg='#cdd6f4',
                 relief="flat",
                 borderwidth=0,
                 highlightthickness=0,
@@ -419,8 +417,6 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             relief="flat",
             borderwidth=0,
             highlightthickness=0,
-            bg='#181825',
-            fg='#cdd6f4',
             padx=10,
             pady=10
         )
@@ -554,8 +550,6 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             progress_frame,
             height=10,
             font=("Consolas", 10),
-            bg='#181825',
-            fg='#cdd6f4',
             relief="flat",
             borderwidth=0,
             highlightthickness=0,

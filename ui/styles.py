@@ -21,8 +21,25 @@ def apply_styles(root):
         'success': '#a6e3a1'          # Success green
     }
 
-    # Configure main window
+    # Configure main window and root widgets
     root.configure(bg=colors['bg_dark'])
+    root.option_add("*Text.background", colors['bg_darker'])
+    root.option_add("*Text.foreground", colors['text'])
+    root.option_add("*Text.selectBackground", colors['primary'])
+    root.option_add("*Text.selectForeground", colors['bg_dark'])
+    root.option_add("*Text.highlightThickness", 0)
+    root.option_add("*Text.highlightBackground", colors['bg_dark'])
+    root.option_add("*Text.highlightColor", colors['primary'])
+
+    # Configure Entry widget styles
+    style.configure(
+        "TEntry",
+        fieldbackground=colors['bg_darker'],
+        foreground=colors['text'],
+        insertcolor=colors['text'],
+        selectbackground=colors['primary'],
+        selectforeground=colors['bg_dark']
+    )
 
     # Configure frame styles
     style.configure(
@@ -51,7 +68,7 @@ def apply_styles(root):
         padding=(10, 5)
     )
 
-    # Configure drop zone styles - keep subtle border for drag-drop visual feedback
+    # Configure drop zone styles
     style.configure(
         "DropZone.TLabel",
         background=colors['bg_darker'],
@@ -97,11 +114,11 @@ def apply_styles(root):
         "Accent.TButton",
         background=[
             ("active", colors['accent']),
-            ("disabled", colors['bg_darker'])  # Darker grey when disabled
+            ("disabled", colors['bg_darker'])
         ],
         foreground=[
             ("active", colors['bg_dark']),
-            ("disabled", colors['text_secondary'])  # Secondary text color when disabled
+            ("disabled", colors['text_secondary'])
         ]
     )
 
@@ -135,16 +152,16 @@ def apply_styles(root):
         padding=(0, 10)
     )
 
-    # Configure Treeview styles - removed borders
+    # Configure Treeview styles
     style.configure(
         "ServerList.Treeview",
         background=colors['bg_darker'],
         foreground=colors['text'],
         fieldbackground=colors['bg_darker'],
         borderwidth=0,
-        font=("Segoe UI", 12),  # Further increased font size
-        rowheight=50,           # Increased row height more
-        padding=(15, 8)         # Increased padding
+        font=("Segoe UI", 12),
+        rowheight=50,
+        padding=(15, 8)
     )
 
     style.configure(
@@ -153,14 +170,14 @@ def apply_styles(root):
         foreground=colors['text'],
         relief="flat",
         borderwidth=0,
-        font=("Segoe UI", 12, "bold")  # Increased font size to match
+        font=("Segoe UI", 12, "bold")
     )
 
-    # Configure Canvas background for server list
+    # Configure Canvas background
     root.option_add("*Canvas.background", colors['bg_darker'])
     root.option_add("*Canvas.highlightthickness", 0)
 
-    # Configure modern scrollbar style - removed borders
+    # Configure modern scrollbar style
     style.configure(
         "TScrollbar",
         background=colors['bg_darker'],
@@ -168,14 +185,14 @@ def apply_styles(root):
         borderwidth=0,
         relief="flat",
         arrowsize=0,
-        width=8  # Made scrollbar thinner
+        width=8
     )
 
     style.map(
         "TScrollbar",
         background=[
             ("active", colors['active']),
-            ("!active", colors['hover'])  # Made inactive state more visible
+            ("!active", colors['hover'])
         ]
     )
 
@@ -183,3 +200,36 @@ def apply_styles(root):
         "Canvas.TFrame",
         background=colors['bg_dark']
     )
+
+    # Configure Toplevel dialog styles
+    root.option_add("*Toplevel.background", colors['bg_dark'])
+    root.option_add("*Dialog.background", colors['bg_dark'])
+    root.option_add("*Menu.background", colors['bg_darker'])
+    root.option_add("*Menu.foreground", colors['text'])
+    root.option_add("*Menu.selectColor", colors['primary'])
+    root.option_add("*Menu.activeBackground", colors['hover'])
+    root.option_add("*Menu.activeForeground", colors['text'])
+
+    # Configure Text widget styles
+    root.option_add("*Text.background", colors['bg_darker'])
+    root.option_add("*Text.foreground", colors['text'])
+    root.option_add("*Text.selectBackground", colors['primary'])
+    root.option_add("*Text.selectForeground", colors['bg_dark'])
+    root.option_add("*Text.insertBackground", colors['text'])
+
+    # Configure ScrolledText widget styles
+    root.option_add("*ScrolledText.background", colors['bg_darker'])
+    root.option_add("*ScrolledText.foreground", colors['text'])
+    root.option_add("*ScrolledText.selectBackground", colors['primary'])
+    root.option_add("*ScrolledText.selectForeground", colors['bg_dark'])
+    root.option_add("*ScrolledText.insertBackground", colors['text'])
+
+    # Configure message box styles
+    root.option_add("*Message.background", colors['bg_dark'])
+    root.option_add("*Message.foreground", colors['text'])
+    root.option_add("*Dialog.msg.background", colors['bg_dark'])
+    root.option_add("*Dialog.msg.foreground", colors['text'])
+
+    # Configure popup menu styles
+    root.option_add("*Popup.background", colors['bg_darker'])
+    root.option_add("*Popup.foreground", colors['text'])
