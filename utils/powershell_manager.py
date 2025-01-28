@@ -34,49 +34,49 @@ def publish_to_environment(app_path: str, config: dict) -> tuple:
     env_type = config['environmentType'].lower()
     app_name = os.path.basename(app_path)
 
-    # Log deployment attempt
-    logging.info(f"Starting deployment of {app_name} to {config['name']}")
+    # Log deployment attempt in German
+    logging.info(f"Starte Veröffentlichung von {app_name} auf {config['name']}")
 
     try:
         if env_type == 'sandbox':
             command = f"""
             $ErrorActionPreference = 'Stop'
-            Write-Host "Publishing {app_name} to {config['name']} ({config['environmentName']})"
+            Write-Host "Veröffentliche {app_name} auf {config['name']} ({config['environmentName']})"
 
             # TODO: Replace with actual deployment commands
             $tenant = "{config['tenant']}"
             $environment = "{config['environmentName']}"
             $appPath = "{app_path}"
 
-            Write-Host "Deploying to tenant: $tenant, environment: $environment"
+            Write-Host "Veröffentlichung auf Mandant: $tenant, Umgebung: $environment"
             """
 
         elif env_type == 'onprem':
             command = f"""
             $ErrorActionPreference = 'Stop'
-            Write-Host "Publishing {app_name} to {config['name']} ({config['serverInstance']})"
+            Write-Host "Veröffentliche {app_name} auf {config['name']} ({config['serverInstance']})"
 
             # TODO: Replace with actual deployment commands
             $server = "{config['server']}"
             $instance = "{config['serverInstance']}"
             $appPath = "{app_path}"
 
-            Write-Host "Deploying to server: $server, instance: $instance"
+            Write-Host "Veröffentlichung auf Server: $server, Instanz: $instance"
             """
 
         stdout, stderr = execute_powershell(command)
-        logging.info(f"Deployment output: {stdout}")
+        logging.info(f"Veröffentlichungsausgabe: {stdout}")
 
         if stderr:
-            logging.error(f"Deployment errors: {stderr}")
-            return False, f"Failed to deploy to {config['name']}: {stderr}"
+            logging.error(f"Veröffentlichungsfehler: {stderr}")
+            return False, f"Veröffentlichung auf {config['name']} fehlgeschlagen: {stderr}"
 
-        return True, f"Successfully deployed to {config['name']}"
+        return True, f"Erfolgreich auf {config['name']} veröffentlicht"
 
     except Exception as e:
         error_msg = str(e)
-        logging.error(f"Deployment failed: {error_msg}")
-        return False, f"Failed to deploy to {config['name']}: {error_msg}"
+        logging.error(f"Veröffentlichung fehlgeschlagen: {error_msg}")
+        return False, f"Veröffentlichung auf {config['name']} fehlgeschlagen: {error_msg}"
 
 def execute_powershell(command):
     """

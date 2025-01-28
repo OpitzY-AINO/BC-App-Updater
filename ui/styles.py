@@ -32,17 +32,15 @@ def apply_styles(root):
 
     style.configure(
         "Card.TFrame",
-        background=colors['bg_darker'],
-        borderwidth=1,
-        relief="solid"
+        background=colors['bg_darker']
     )
 
-    # Configure modern labelframe
+    # Configure modern labelframe - removed borders
     style.configure(
         "TLabelframe",
         background=colors['bg_dark'],
-        borderwidth=1,
-        relief="solid"
+        borderwidth=0,
+        relief="flat"
     )
 
     style.configure(
@@ -53,16 +51,15 @@ def apply_styles(root):
         padding=(10, 5)
     )
 
-    # Configure drop zone styles
+    # Configure drop zone styles - keep subtle border for drag-drop visual feedback
     style.configure(
         "DropZone.TLabel",
         background=colors['bg_darker'],
         foreground=colors['text'],
         font=("Segoe UI", 11),
         padding=20,
-        relief="solid",
-        borderwidth=2,
-        bordercolor=colors['border']
+        relief="flat",
+        borderwidth=0
     )
 
     style.configure(
@@ -71,9 +68,8 @@ def apply_styles(root):
         foreground=colors['primary'],
         font=("Segoe UI", 11),
         padding=20,
-        relief="solid",
-        borderwidth=2,
-        bordercolor=colors['primary']
+        relief="flat",
+        borderwidth=0
     )
 
     style.configure(
@@ -82,9 +78,8 @@ def apply_styles(root):
         foreground=colors['primary'],
         font=("Segoe UI", 11),
         padding=20,
-        relief="solid",
-        borderwidth=2,
-        bordercolor=colors['primary']
+        relief="flat",
+        borderwidth=0
     )
 
     # Configure modern button styles
@@ -94,6 +89,7 @@ def apply_styles(root):
         foreground=colors['bg_dark'],
         font=("Segoe UI", 10, "bold"),
         padding=(20, 10),
+        relief="flat",
         borderwidth=0
     )
 
@@ -133,7 +129,7 @@ def apply_styles(root):
         padding=(0, 10)
     )
 
-    # Configure Treeview styles
+    # Configure Treeview styles - removed borders
     style.configure(
         "ServerList.Treeview",
         background=colors['bg_darker'],
@@ -141,7 +137,7 @@ def apply_styles(root):
         fieldbackground=colors['bg_darker'],
         borderwidth=0,
         font=("Segoe UI", 10),
-        rowheight=30  # Increase row height for better checkbox visibility
+        rowheight=30
     )
 
     style.configure(
@@ -149,10 +145,10 @@ def apply_styles(root):
         background=colors['bg_darker'],
         foreground=colors['text'],
         relief="flat",
+        borderwidth=0,
         font=("Segoe UI", 10, "bold")
     )
 
-    # Configure Treeview selection colors
     style.map(
         "ServerList.Treeview",
         background=[
@@ -169,22 +165,22 @@ def apply_styles(root):
     root.option_add("*Canvas.background", colors['bg_darker'])
     root.option_add("*Canvas.highlightthickness", 0)
 
-    # Configure modern scrollbar style
+    # Configure modern scrollbar style - removed borders
     style.configure(
         "TScrollbar",
         background=colors['bg_darker'],
         troughcolor=colors['bg_darker'],
         borderwidth=0,
         relief="flat",
-        arrowsize=0,  # Hide arrows
-        width=10  # Thinner scrollbar
+        arrowsize=0,
+        width=8  # Made scrollbar thinner
     )
 
     style.map(
         "TScrollbar",
         background=[
             ("active", colors['active']),
-            ("!active", colors['border'])
+            ("!active", colors['hover'])  # Made inactive state more visible
         ]
     )
 
