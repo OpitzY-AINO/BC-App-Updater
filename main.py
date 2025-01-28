@@ -80,7 +80,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         self.config_drop_zone.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        # Right side: Text editor
+        # Right side: Text editor with matching height
         editor_frame = ttk.Frame(main_frame, style="TFrame")
         editor_frame.grid(row=1, column=1, sticky="nsew")
 
@@ -108,9 +108,9 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.config_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         text_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        # Button container below dropzones and editor
+        # Button container between editor and server list
         button_frame = ttk.Frame(main_frame, style="TFrame")
-        button_frame.grid(row=2, column=0, columnspan=2, sticky="ew", pady=(5, 10))
+        button_frame.grid(row=2, column=0, columnspan=2, sticky="ew", pady=10)
 
         # Clear and Parse buttons centered
         button_container = ttk.Frame(button_frame, style="TFrame")
@@ -132,7 +132,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         parse_btn.pack(side=tk.LEFT, padx=5)
 
-        # Server List Section
+        # Server List Section below buttons
         list_frame = ttk.LabelFrame(main_frame, text=get_text('server_configs'), padding="10", style="TLabelframe")
         list_frame.grid(row=3, column=0, columnspan=2, sticky="nsew", pady=(0, 10))
 
