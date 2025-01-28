@@ -27,52 +27,56 @@ def parse_server_config(config_data):
     if not isinstance(configs, list):
         raise ValueError("'configurations' must be a list of server configurations")
 
-    required_fields = [
-        'name',
-        'tenant',
-        'environmentName',
-        'environmentType'
-    ]
-
     parsed_configs = []
 
     for i, config in enumerate(configs, 1):
         if not isinstance(config, dict):
             raise ValueError(f"Configuration {i} must be a JSON object")
 
-        # Validate required fields
-        missing_fields = [
-            field for field in required_fields
-            if field not in config
-        ]
+        # Check environment type first
+        if 'environmentType' not in config:
+            raise ValueError(f"Configuration {i} ({config.get('name', 'unnamed')}) is missing 'environmentType' field")
 
-        if missing_fields:
-            raise ValueError(
-                f"Configuration {i} ({config.get('name', 'unnamed')}) "
-                f"is missing required fields: {', '.join(missing_fields)}"
-            )
+        env_type = config['environmentType'].lower()
 
-        # Validate field types
-        if not isinstance(config['name'], str):
-            raise ValueError(f"Configuration {i}: 'name' must be a string")
-        if not isinstance(config['tenant'], str):
-            raise ValueError(f"Configuration {i}: 'tenant' must be a string")
-        if not isinstance(config['environmentName'], str):
-            raise ValueError(f"Configuration {i}: 'environmentName' must be a string")
-        if not isinstance(config['environmentType'], str):
-            raise ValueError(f"Configuration {i}: 'environmentType' must be a string")
+        # Basic validation for name
+        if 'name' not in config:
+            raise ValueError(f"Configuration {i} is missing 'name' field")
 
-        # Only include sandbox environments
-        if config['environmentType'].lower() != 'sandbox':
-            continue
-
-        parsed_configs.append({
+        # Create base config
+        parsed_config = {
             'name': config['name'],
-            'tenant': config['tenant'],
-            'environmentName': config['environmentName'],
             'environmentType': config['environmentType'],
-            'authentication': config.get('authentication', 'AAD'),
-            'schemaUpdateMode': config.get('schemaUpdateMode', 'Synchronize')
-        })
+            'authentication': config.get('authentication', 'AAD')
+        }
+
+        # Add environment-specific fields
+        if env_type == 'sandbox':
+            # Validate required fields for sandbox
+            if 'tenant' not in config:
+                raise ValueError(f"Configuration {i} ({config['name']}) is missing 'tenant' field required for Sandbox environment")
+            if 'environmentName' not in config:
+                raise ValueError(f"Configuration {i} ({config['name']}) is missing 'environmentName' field required for Sandbox environment")
+
+            parsed_config.update({
+                'tenant': config['tenant'],
+                'environmentName': config['environmentName'],
+                'schemaUpdateMode': config.get('schemaUpdateMode', 'Synchronize')
+            })
+        elif env_type == 'onprem':
+            # Validate required fields for onprem
+            if 'server' not in config:
+                raise ValueError(f"Configuration {i} ({config['name']}) is missing 'server' field required for OnPrem environment")
+            if 'serverInstance' not in config:
+                raise ValueError(f"Configuration {i} ({config['name']}) is missing 'serverInstance' field required for OnPrem environment")
+
+            parsed_config.update({
+                'server': config['server'],
+                'serverInstance': config['serverInstance'],
+                'tenant': config.get('tenant', 'default'),
+                'schemaUpdateMode': config.get('schemaUpdateMode', 'Synchronize')
+            })
+
+        parsed_configs.append(parsed_config)
 
     return parsed_configs
