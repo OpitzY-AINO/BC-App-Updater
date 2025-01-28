@@ -15,8 +15,14 @@ TRANSLATIONS = {
     'apply_changes': 'Änderungen übernehmen',
     'open_editor': 'Editor öffnen',
     'close': 'Schließen',
-    'load_current': 'Aktuelle Konfigurationen laden',
-    'no_configs': 'Keine Konfigurationen zum Laden vorhanden',
+    'test_connection': 'Verbindung testen',  # New
+    'connection_test_progress': 'Verbindungstest Fortschritt',  # New
+    'testing_connection': 'Teste Verbindung zu {server}...',  # New
+    'test_summary': '=== Verbindungstest Zusammenfassung ===',  # New
+    'test_complete': 'Verbindungstest Abgeschlossen',  # New
+    'test_complete_with_errors': 'Verbindungstest mit {count} Fehler(n) abgeschlossen',  # New
+    'all_tests_successful': 'Alle Verbindungstests erfolgreich!',  # New
+    'select_server_test': 'Bitte wählen Sie mindestens einen Server für den Test aus',  # New
 
     # Column headers
     'col_select': 'Auswahl',

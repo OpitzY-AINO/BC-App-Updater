@@ -1,10 +1,10 @@
 [
   {
-    "name": "AEMDemo",
+    "name": "AEMDemo - DO NOT PUBLISH",
     "environmentType": "Sandbox",
     "authentication": "AAD",
     "tenant": "946372e3-6895-4e61-aa7d-9f8ebab9791b",
-    "environmentName": "AEMDemo",
+    "environmentName": "AEMDemo123",
     "schemaUpdateMode": "Synchronize"
   },
   {
@@ -39,5 +39,13 @@
     "serverInstance": "BC",
     "tenant": "default",
     "schemaUpdateMode": "ForceSync"
+  },
+  {
+    "name": "AEMDemo123 - DO NOT PUBLISH",
+    "environmentType": "Sandbox",
+    "authentication": "AAD",
+    "tenant": "946372e3-6895-4e61-aa7d-9f8ebab9791b",
+    "environmentName": "AEMDemo",
+    "schemaUpdateMode": "Synchronize"
   }
 ]
