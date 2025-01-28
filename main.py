@@ -83,15 +83,11 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         self.config_drop_zone.pack(fill=tk.BOTH, expand=True)
 
-        # Right side: Text input and buttons
-        text_frame = ttk.Frame(config_inner, style="TFrame")
-        text_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0))
+        # Right side: buttons only
+        button_frame = ttk.Frame(config_inner, style="TFrame")
+        button_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0))
 
-        # Button container with reduced padding
-        button_frame = ttk.Frame(text_frame, style="TFrame")
-        button_frame.pack(fill=tk.X, pady=(0, 5))
-
-        # Clear, Editor, and Parse buttons
+        # Clear and Editor buttons
         clear_btn = ttk.Button(
             button_frame,
             text=get_text('clear'),
@@ -108,40 +104,6 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         editor_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=2)
 
-        parse_btn = ttk.Button(
-            button_frame,
-            text=get_text('parse_config'),
-            command=self.parse_text_config,
-            style="Accent.TButton"
-        )
-        parse_btn.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(2, 0))
-
-
-        # Text area with reduced height
-        self.config_text = tk.Text(
-            text_frame,
-            height=6,
-            width=40,
-            font=("Consolas", 10),
-            relief="flat",
-            borderwidth=0,
-            highlightthickness=0,
-            bg='#181825',
-            fg='#cdd6f4',
-            padx=10,
-            pady=10
-        )
-
-        text_scrollbar = ttk.Scrollbar(
-            text_frame,
-            orient="vertical",
-            command=self.config_text.yview,
-            style="TScrollbar"
-        )
-
-        self.config_text.configure(yscrollcommand=text_scrollbar.set)
-        self.config_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        text_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
         # Server List Section with increased size
         list_frame = ttk.LabelFrame(main_frame, text=get_text('server_configs'), padding="10", style="TLabelframe")
@@ -499,9 +461,10 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         editor.configure(yscrollcommand=scrollbar.set)
 
-        # Add current content to editor
-        current_text = self.config_text.get("1.0", tk.END)
-        editor.insert("1.0", current_text)
+        # Add current content to editor if exists
+        if hasattr(self, 'config_text'):
+            current_text = self.config_text.get("1.0", tk.END)
+            editor.insert("1.0", current_text)
 
         # Layout
         editor.grid(row=0, column=0, sticky="nsew")
@@ -510,6 +473,15 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         # Button frame
         button_frame = ttk.Frame(editor_frame, style="TFrame")
         button_frame.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(20, 0))
+
+        # Close button
+        close_btn = ttk.Button(
+            button_frame,
+            text=get_text('close'),
+            style="Accent.TButton",
+            command=popup.destroy
+        )
+        close_btn.pack(side=tk.RIGHT, padx=(5, 0))
 
         # Apply button
         apply_btn = ttk.Button(
