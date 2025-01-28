@@ -124,65 +124,48 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.config_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         text_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-
-        # Server list section
+        # Server list section with Treeview
         list_frame = ttk.LabelFrame(main_frame, text="Server Configurations", padding="10", style="TLabelframe")
         list_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 20))
 
-        # Server list with modern styling
-        self.server_list = ttk.Frame(list_frame, style="ServerList.TFrame")
-        self.server_list.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-
-        # Scrollable server list
-        self.servers_canvas = tk.Canvas(
-            self.server_list,
-            highlightthickness=0,
-            bd=0,
-            background='#181825'
+        # Create Treeview for server list
+        self.server_tree = ttk.Treeview(
+            list_frame,
+            columns=("selected", "name", "details"),
+            show="headings",
+            selectmode="none",
+            style="ServerList.Treeview"
         )
 
-        # Create and configure modern scrollbar for server list
-        scrollbar = ttk.Scrollbar(
-            self.server_list,
+        # Configure columns
+        self.server_tree.heading("selected", text="")
+        self.server_tree.heading("name", text="Name")
+        self.server_tree.heading("details", text="Details")
+
+        # Set column widths
+        self.server_tree.column("selected", width=50, stretch=False)
+        self.server_tree.column("name", width=200, stretch=True)
+        self.server_tree.column("details", width=400, stretch=True)
+
+        # Create scrollbar for Treeview
+        tree_scrollbar = ttk.Scrollbar(
+            list_frame,
             orient="vertical",
-            command=self.servers_canvas.yview,
+            command=self.server_tree.yview,
             style="TScrollbar"
         )
 
-        self.servers_frame = ttk.Frame(self.servers_canvas, style="ServerList.TFrame")
+        self.server_tree.configure(yscrollcommand=tree_scrollbar.set)
 
-        # Configure canvas scrolling
-        self.servers_frame.bind(
-            '<Configure>',
-            lambda e: self.servers_canvas.configure(scrollregion=self.servers_canvas.bbox("all"))
-        )
+        # Pack Treeview and scrollbar
+        self.server_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0), pady=5)
+        tree_scrollbar.pack(side=tk.RIGHT, fill=tk.Y, pady=5)
 
-        # Ensure the canvas window spans the full width
-        self.servers_canvas.bind('<Configure>', lambda e: self.servers_canvas.itemconfig(
-            self.canvas_window, width=e.width))
+        # Store checkbox variables in a dictionary
+        self.checkbox_vars = {}
 
-        # Add mouse wheel scrolling
-        def _on_mousewheel(event):
-            # Bind mousewheel event to the canvas for smoother scrolling
-            self.servers_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
-            return "break"  # Prevent event from propagating
-
-        # Bind mouse wheel to server list frame and all its children
-        self.server_list.bind_all("<MouseWheel>", _on_mousewheel)
-
-
-        # Create the canvas window with proper width
-        self.canvas_window = self.servers_canvas.create_window(
-            (0, 0),
-            window=self.servers_frame,
-            anchor="nw"
-        )
-
-        # Configure the canvas to expand with the window
-        self.servers_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-
-        self.servers_canvas.configure(yscrollcommand=scrollbar.set)
+        # Bind checkbox click handler
+        self.server_tree.bind("<Button-1>", self.handle_checkbox_click)
 
         # Publish button with accent styling
         self.publish_button = ttk.Button(
@@ -193,57 +176,61 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         self.publish_button.pack(fill=tk.X)
 
-    def show_text_menu(self, event):
-        """Show the right-click menu for the text area"""
+    def handle_checkbox_click(self, event):
+        """Handle clicks in the checkbox column"""
+        region = self.server_tree.identify_region(event.x, event.y)
+        if region == "cell":
+            column = self.server_tree.identify_column(event.x)
+            if column == "#1":  # First column (checkbox)
+                item = self.server_tree.identify_row(event.y)
+                if item:
+                    current_val = self.checkbox_vars.get(item, tk.BooleanVar(value=False))
+                    current_val.set(not current_val.get())
+                    self.checkbox_vars[item] = current_val
+                    # Update checkbox display
+                    self.server_tree.set(item, "selected", "☒" if current_val.get() else "☐")
+
+    def process_config(self, config_data):
         try:
-            self.text_menu.tk_popup(event.x_root, event.y_root)
-        finally:
-            self.text_menu.grab_release()
-
-    def paste_text(self):
-        """Paste text from clipboard into the text area"""
-        try:
-            # Try to get clipboard content
-            clipboard_text = self.clipboard_get()
-            self.config_text.insert(tk.INSERT, clipboard_text)
-
-            # Try to parse as JSON, but don't show error if it fails
-            try:
-                if clipboard_text.strip():
-                    config_data = json.loads(clipboard_text)
-                    self.process_config(config_data)
-            except json.JSONDecodeError:
-                # Ignore JSON parsing errors during paste
-                pass
-
-        except tk.TclError:
-            # Ignore clipboard errors
-            pass
-
-    def parse_text_config(self):
-        """Parse configuration from text input"""
-        try:
-            config_text = self.config_text.get("1.0", tk.END).strip()
-            if not config_text:
-                messagebox.showerror("Error", "Please enter configuration JSON")
-                return
-
-            # Try to parse and format JSON
-            config_data = json.loads(config_text)
-
-            # Format and display the properly formatted JSON
-            formatted_json = json.dumps(config_data, indent=2)
-            self.config_text.delete("1.0", tk.END)
-            self.config_text.insert("1.0", formatted_json)
-
-            self.process_config(config_data)
-        except json.JSONDecodeError as e:
-            line_no = int(str(e).split('line')[1].split()[0])
-            col_no = int(str(e).split('column')[1].split()[0])
-            error_msg = f"JSON Format Error:\n{str(e)}\n\nPlease check line {line_no}, column {col_no} of your JSON configuration."
-            messagebox.showerror("Error", error_msg)
+            self.server_configs = parse_server_config(config_data)
+            self.update_server_list()
+            self.config_drop_zone.update_text(f"Loaded {len(self.server_configs)} server configurations")
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to parse configuration: {str(e)}")
+            messagebox.showerror("Error", f"Failed to process configuration: {str(e)}")
+
+    def update_server_list(self):
+        # Clear existing items
+        for item in self.server_tree.get_children():
+            self.server_tree.delete(item)
+        self.checkbox_vars.clear()
+
+        # Add new items
+        for i, config in enumerate(self.server_configs):
+            # Create display text based on environment type
+            if config['environmentType'].lower() == 'sandbox':
+                details = f"{config['environmentName']}"
+            elif config['environmentType'].lower() == 'onprem':
+                details = f"{config['serverInstance']}@{config['server']}"
+
+            # Create checkbox variable
+            var = tk.BooleanVar(value=False)
+            item_id = f"server_{i}"
+            self.checkbox_vars[item_id] = var
+
+            self.server_tree.insert(
+                "",
+                tk.END,
+                item_id,
+                values=("☐", config['name'], details)
+            )
+
+    def clear_all(self):
+        """Clear both the text area and server configurations"""
+        self.config_text.delete("1.0", tk.END)
+        self.server_configs = []
+        self.checkbox_vars.clear()
+        self.update_server_list()
+        self.config_drop_zone.update_text("Drop server config JSON here\nor click to browse")
 
     def handle_app_drop(self, file_path):
         if file_path.lower().endswith('.app'):
@@ -281,48 +268,30 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load configuration: {str(e)}")
 
-    def process_config(self, config_data):
+    def parse_text_config(self):
+        """Parse configuration from text input"""
         try:
-            self.server_configs = parse_server_config(config_data)
-            self.update_server_list()
-            # Remove popup message, only update dropzone text
-            self.config_drop_zone.update_text(f"Loaded {len(self.server_configs)} server configurations")
+            config_text = self.config_text.get("1.0", tk.END).strip()
+            if not config_text:
+                messagebox.showerror("Error", "Please enter configuration JSON")
+                return
+
+            # Try to parse and format JSON
+            config_data = json.loads(config_text)
+
+            # Format and display the properly formatted JSON
+            formatted_json = json.dumps(config_data, indent=2)
+            self.config_text.delete("1.0", tk.END)
+            self.config_text.insert("1.0", formatted_json)
+
+            self.process_config(config_data)
+        except json.JSONDecodeError as e:
+            line_no = int(str(e).split('line')[1].split()[0])
+            col_no = int(str(e).split('column')[1].split()[0])
+            error_msg = f"JSON Format Error:\n{str(e)}\n\nPlease check line {line_no}, column {col_no} of your JSON configuration."
+            messagebox.showerror("Error", error_msg)
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to process configuration: {str(e)}")
-
-    def update_server_list(self):
-        # Clear existing items
-        for widget in self.servers_frame.winfo_children():
-            widget.destroy()
-
-        # Add new items with modern styling
-        for config in self.server_configs:
-            frame = ttk.Frame(self.servers_frame, style="ServerList.TFrame")
-            frame.pack(fill=tk.X, pady=5, padx=5)
-
-            var = tk.BooleanVar(value=False)
-            cb = ttk.Checkbutton(frame, variable=var, style="ServerList.TCheckbutton")
-            cb.pack(side=tk.LEFT)
-
-            # Create display text based on environment type
-            display_text = config['name']
-            if config['environmentType'].lower() == 'sandbox':
-                display_text += f" ({config['environmentName']})"
-            elif config['environmentType'].lower() == 'onprem':
-                display_text += f" ({config['serverInstance']}@{config['server']})"
-
-            name_label = ttk.Label(
-                frame,
-                text=display_text,
-                style="ServerList.TLabel"
-            )
-            name_label.pack(side=tk.LEFT, padx=5)
-
-            config['checkbox_var'] = var
-
-            # Bind mouse wheel to each server item frame.  This line was missing from the original code.
-            frame.bind("<MouseWheel>", lambda e, frame=frame: self.servers_canvas.yview_scroll(int(-1*(e.delta/120)), "units"))
-
+            messagebox.showerror("Error", f"Failed to parse configuration: {str(e)}")
 
     def publish_extension(self):
         if not self.app_file_path:
@@ -330,8 +299,8 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             return
 
         selected_configs = [
-            config for config in self.server_configs
-            if config['checkbox_var'].get()
+            config for i, config in enumerate(self.server_configs)
+            if self.checkbox_vars.get(f"server_{i}").get()
         ]
 
         if not selected_configs:
@@ -350,12 +319,32 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         except Exception as e:
             messagebox.showerror("Error", f"Failed to publish: {str(e)}")
 
-    def clear_all(self):
-        """Clear both the text area and server configurations"""
-        self.config_text.delete("1.0", tk.END)
-        self.server_configs = []
-        self.update_server_list()
-        self.config_drop_zone.update_text("Drop server config JSON here\nor click to browse")
+    def show_text_menu(self, event):
+        """Show the right-click menu for the text area"""
+        try:
+            self.text_menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            self.text_menu.grab_release()
+
+    def paste_text(self):
+        """Paste text from clipboard into the text area"""
+        try:
+            # Try to get clipboard content
+            clipboard_text = self.clipboard_get()
+            self.config_text.insert(tk.INSERT, clipboard_text)
+
+            # Try to parse as JSON, but don't show error if it fails
+            try:
+                if clipboard_text.strip():
+                    config_data = json.loads(clipboard_text)
+                    self.process_config(config_data)
+            except json.JSONDecodeError:
+                # Ignore JSON parsing errors during paste
+                pass
+
+        except tk.TclError:
+            # Ignore clipboard errors
+            pass
 
 
 if __name__ == "__main__":

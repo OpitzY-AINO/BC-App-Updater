@@ -192,6 +192,31 @@ def apply_styles(root):
         ]
     )
 
+    # Configure Treeview styles
+    style.configure(
+        "ServerList.Treeview",
+        background=colors['bg_darker'],
+        foreground=colors['text'],
+        fieldbackground=colors['bg_darker'],
+        borderwidth=0,
+        font=("Segoe UI", 10)
+    )
+
+    style.configure(
+        "ServerList.Treeview.Heading",
+        background=colors['bg_darker'],
+        foreground=colors['text'],
+        relief="flat",
+        font=("Segoe UI", 10, "bold")
+    )
+
+    # Configure Treeview selection colors
+    style.map(
+        "ServerList.Treeview",
+        background=[("selected", colors['bg_darker'])],
+        foreground=[("selected", colors['text'])]
+    )
+
     style.configure(
         "Canvas.TFrame",
         background=colors['bg_dark']
