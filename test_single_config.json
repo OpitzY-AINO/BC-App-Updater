@@ -1,0 +1,10 @@
+{
+    "type": "al",
+    "request": "attach",
+    "name": "AEMDev2 - Debug Background",
+    "tenant": "946372e3-6895-4e61-aa7d-9f8ebab9791b",
+    "authentication": "AAD",
+    "environmentName": "AEMDev2",
+    "environmentType": "Sandbox",
+    "breakOnNext": "Background"
+}

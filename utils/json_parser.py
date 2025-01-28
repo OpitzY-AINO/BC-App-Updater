@@ -14,6 +14,11 @@ def parse_server_config(config_data):
     if not isinstance(config_data, dict):
         raise ValueError("Configuration must be a JSON object")
 
+    # Try to parse as a single configuration first
+    if all(key in config_data for key in ['name', 'environmentType']):
+        return [parse_single_config(config_data)]
+
+    # Otherwise, parse as full configuration format
     # Check for version field
     version = config_data.get('version')
     if not version:
@@ -23,60 +28,70 @@ def parse_server_config(config_data):
         raise ValueError("Missing 'configurations' field in configuration")
 
     configs = config_data['configurations']
-
     if not isinstance(configs, list):
         raise ValueError("'configurations' must be a list of server configurations")
 
-    parsed_configs = []
+    return [parse_single_config(config, i) for i, config in enumerate(configs, 1)]
 
-    for i, config in enumerate(configs, 1):
-        if not isinstance(config, dict):
-            raise ValueError(f"Configuration {i} must be a JSON object")
+def parse_single_config(config, index=1):
+    """
+    Parse a single server configuration.
 
-        # Check environment type first
-        if 'environmentType' not in config:
-            raise ValueError(f"Configuration {i} ({config.get('name', 'unnamed')}) is missing 'environmentType' field")
+    Args:
+        config (dict): Single server configuration
+        index (int): Configuration index for error messages
 
-        env_type = config['environmentType'].lower()
+    Returns:
+        dict: Parsed server configuration
 
-        # Basic validation for name
-        if 'name' not in config:
-            raise ValueError(f"Configuration {i} is missing 'name' field")
+    Raises:
+        ValueError: If the configuration format is invalid
+    """
+    if not isinstance(config, dict):
+        raise ValueError(f"Configuration {index} must be a JSON object")
 
-        # Create base config
-        parsed_config = {
-            'name': config['name'],
-            'environmentType': config['environmentType'],
-            'authentication': config.get('authentication', 'AAD')
-        }
+    # Check environment type first
+    if 'environmentType' not in config:
+        raise ValueError(f"Configuration {index} ({config.get('name', 'unnamed')}) is missing 'environmentType' field")
 
-        # Add environment-specific fields
-        if env_type == 'sandbox':
-            # Validate required fields for sandbox
-            if 'tenant' not in config:
-                raise ValueError(f"Configuration {i} ({config['name']}) is missing 'tenant' field required for Sandbox environment")
-            if 'environmentName' not in config:
-                raise ValueError(f"Configuration {i} ({config['name']}) is missing 'environmentName' field required for Sandbox environment")
+    env_type = config['environmentType'].lower()
 
-            parsed_config.update({
-                'tenant': config['tenant'],
-                'environmentName': config['environmentName'],
-                'schemaUpdateMode': config.get('schemaUpdateMode', 'Synchronize')
-            })
-        elif env_type == 'onprem':
-            # Validate required fields for onprem
-            if 'server' not in config:
-                raise ValueError(f"Configuration {i} ({config['name']}) is missing 'server' field required for OnPrem environment")
-            if 'serverInstance' not in config:
-                raise ValueError(f"Configuration {i} ({config['name']}) is missing 'serverInstance' field required for OnPrem environment")
+    # Basic validation for name
+    if 'name' not in config:
+        raise ValueError(f"Configuration {index} is missing 'name' field")
 
-            parsed_config.update({
-                'server': config['server'],
-                'serverInstance': config['serverInstance'],
-                'tenant': config.get('tenant', 'default'),
-                'schemaUpdateMode': config.get('schemaUpdateMode', 'Synchronize')
-            })
+    # Create base config
+    parsed_config = {
+        'name': config['name'],
+        'environmentType': config['environmentType'],
+        'authentication': config.get('authentication', 'AAD')
+    }
 
-        parsed_configs.append(parsed_config)
+    # Add environment-specific fields
+    if env_type == 'sandbox':
+        # Validate required fields for sandbox
+        if 'tenant' not in config:
+            raise ValueError(f"Configuration {index} ({config['name']}) is missing 'tenant' field required for Sandbox environment")
+        if 'environmentName' not in config:
+            raise ValueError(f"Configuration {index} ({config['name']}) is missing 'environmentName' field required for Sandbox environment")
 
-    return parsed_configs
+        parsed_config.update({
+            'tenant': config['tenant'],
+            'environmentName': config['environmentName'],
+            'schemaUpdateMode': config.get('schemaUpdateMode', 'Synchronize')
+        })
+    elif env_type == 'onprem':
+        # Validate required fields for onprem
+        if 'server' not in config:
+            raise ValueError(f"Configuration {index} ({config['name']}) is missing 'server' field required for OnPrem environment")
+        if 'serverInstance' not in config:
+            raise ValueError(f"Configuration {index} ({config['name']}) is missing 'serverInstance' field required for OnPrem environment")
+
+        parsed_config.update({
+            'server': config['server'],
+            'serverInstance': config['serverInstance'],
+            'tenant': config.get('tenant', 'default'),
+            'schemaUpdateMode': config.get('schemaUpdateMode', 'Synchronize')
+        })
+
+    return parsed_config
