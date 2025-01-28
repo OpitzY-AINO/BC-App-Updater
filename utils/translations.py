@@ -15,14 +15,15 @@ TRANSLATIONS = {
     'apply_changes': 'Änderungen übernehmen',
     'open_editor': 'Editor öffnen',
     'close': 'Schließen',
-    'test_connection': 'Verbindung testen',  # New
-    'connection_test_progress': 'Verbindungstest Fortschritt',  # New
-    'testing_connection': 'Teste Verbindung zu {server}...',  # New
-    'test_summary': '=== Verbindungstest Zusammenfassung ===',  # New
-    'test_complete': 'Verbindungstest Abgeschlossen',  # New
-    'test_complete_with_errors': 'Verbindungstest mit {count} Fehler(n) abgeschlossen',  # New
-    'all_tests_successful': 'Alle Verbindungstests erfolgreich!',  # New
-    'select_server_test': 'Bitte wählen Sie mindestens einen Server für den Test aus',  # New
+    'test_connection': 'Verbindung testen',
+    'connection_test_progress': 'Verbindungstest Fortschritt',
+    'testing_connection': 'Teste Verbindung zu {server}...',
+    'test_summary': '=== Verbindungstest Zusammenfassung ===',
+    'test_complete': 'Verbindungstest Abgeschlossen',
+    'test_complete_with_errors': 'Verbindungstest mit {count} Fehler(n) abgeschlossen',
+    'all_tests_successful': 'Alle Verbindungstests erfolgreich!',
+    'select_server_test': 'Bitte wählen Sie mindestens einen Server für den Test aus',
+    'load_current': 'Aktuelle Konfiguration laden',  # Added missing translation
 
     # Column headers
     'col_select': 'Auswahl',

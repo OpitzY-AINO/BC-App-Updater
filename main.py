@@ -49,6 +49,24 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         # Load saved configurations
         self.update_server_list()
 
+    def center_window(self, window, width=800, height=600):
+        """Center any window on the screen"""
+        # Configure window attributes
+        window.resizable(False, False)
+        window.geometry(f"{width}x{height}")
+        window.update_idletasks()
+
+        # Get screen dimensions
+        screen_width = window.winfo_screenwidth()
+        screen_height = window.winfo_screenheight()
+
+        # Calculate center position
+        center_x = int((screen_width - width) / 2)
+        center_y = int((screen_height - height) / 2)
+
+        # Position window
+        window.geometry(f"{width}x{height}+{center_x}+{center_y}")
+
     def setup_ui(self):
         """Set up the user interface with grid layout"""
         # Main container with increased padding
@@ -143,6 +161,9 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             height=10
         )
 
+        # Configure tag for checked rows
+        self.server_tree.tag_configure("checked", background='#313244')  # Use hover color for checked rows
+
         # Configure columns
         self.server_tree.heading("selected", text=get_text('col_select'), anchor="center")
         self.server_tree.heading("type", text=get_text('col_type'), anchor="center")
@@ -202,6 +223,44 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         x = (window.winfo_screenwidth() // 2) - (width // 2)
         y = (window.winfo_screenheight() // 2) - (height // 2)
         window.geometry(f'{width}x{height}+{x}+{y}')
+
+    def show_progress_window(self, title, width=600, height=400):
+        """Create and center a progress window"""
+        window = tk.Toplevel(self)
+        window.title(title)
+        window.transient(self)
+        window.grab_set()  # Make modal
+
+        # Center the window
+        self.center_window(window, width=width, height=height)
+
+        # Configure progress window
+        progress_frame = ttk.Frame(window, padding="20", style="Card.TFrame")
+        progress_frame.pack(fill=tk.BOTH, expand=True)
+
+        # Add text widget for progress
+        progress_text = scrolledtext.ScrolledText(
+            progress_frame,
+            height=10,
+            font=("Consolas", 10),
+            relief="flat",
+            borderwidth=0,
+            highlightthickness=0,
+            padx=10,
+            pady=10
+        )
+        progress_text.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
+
+        # Add close button (initially enabled)
+        close_btn = ttk.Button(
+            progress_frame,
+            text=get_text('close'),
+            command=window.destroy,
+            style="Accent.TButton"
+        )
+        close_btn.pack(fill=tk.X)
+
+        return window, progress_text, close_btn
 
     def publish_extension(self):
         """Handle the publish button click event"""
@@ -338,7 +397,10 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
                 current_values = self.server_tree.item(item)['values']
                 new_values = list(current_values)
                 new_values[0] = "☑" if current_values[0] == "☐" else "☐"
-                self.server_tree.item(item, values=new_values)
+
+                # Update both values and tags
+                tags = ("checked",) if new_values[0] == "☑" else ()
+                self.server_tree.item(item, values=new_values, tags=tags)
 
                 # Update publish button state
                 self.update_publish_button_state()
@@ -381,16 +443,18 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             else:  # OnPrem
                 environment = config['serverInstance']
 
-            # Insert item with checkbox (using larger symbols for better visibility)
+            # Insert item with checkbox
+            item_id = f"server_{i}"
             self.server_tree.insert(
                 "",
                 tk.END,
-                f"server_{i}",
+                item_id,
                 values=("☐", env_type, name, environment)
             )
 
         # Update publish button state after loading list
         self.update_publish_button_state()
+
 
     def handle_config_drop(self, file_path):
         """Handle dropping a configuration file"""
@@ -417,9 +481,11 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         """Open a popup window with a larger text editor"""
         popup = tk.Toplevel(self)
         popup.title(get_text('config_editor'))
-        popup.geometry("800x600")
         popup.minsize(600, 400)
         self.center_window(popup)
+
+        # Center the popup window with improved function
+        self.center_window(popup, width=800, height=600)
 
         # Configure popup grid
         popup.grid_rowconfigure(0, weight=1)
@@ -478,14 +544,14 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         apply_btn.grid(row=0, column=1, sticky="e", padx=(5, 0))
 
-        # Close button
+        # Close button with increased padding for better separation
         close_btn = ttk.Button(
             button_frame,
             text=get_text('close'),
             style="Accent.TButton",
             command=popup.destroy
         )
-        close_btn.grid(row=0, column=2, sticky="e")
+        close_btn.grid(row=0, column=2, sticky="e", padx=(40, 0))  # Increased padding between buttons
 
         # Configure button frame grid
         button_frame.grid_columnconfigure(1, weight=1)
@@ -622,6 +688,45 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
                 get_text('test_complete'),
                 get_text('all_tests_successful')
             )
+
+            # Update progress text
+            def update_progress(message):
+                progress_text.insert(tk.END, f"{message}\n")
+                progress_text.see(tk.END)
+                progress_text.update()
+
+            # Test connection to each selected server
+            test_results = []
+            for config in selected_configs:
+                update_progress(get_text('testing_connection', server=config['name']))
+                success, message = test_server_connection(config)
+                test_results.append((config['name'], success, message))
+
+                # Update progress with result
+                status = "✓" if success else "✗"
+                update_progress(f"{status} {message}")
+
+            # Show final summary
+            update_progress(f"\n{get_text('test_summary')}")
+            successful = sum(1 for _, success, _ in test_results if success)
+            failed = len(test_results) - successful
+            update_progress(get_text('successful', count=successful))
+            update_progress(get_text('failed', count=failed))
+
+            # Show error message if any tests failed
+            if failed > 0:
+                messagebox.showerror(
+                    get_text('test_complete'),
+                    get_text('test_complete_with_errors', count=failed)
+                )
+            else:
+                messagebox.showinfo(
+                    get_text('test_complete'),
+                    get_text('all_tests_successful')
+                )
+
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
 
 
 def preprocess_json_text(json_text):
