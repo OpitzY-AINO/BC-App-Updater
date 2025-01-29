@@ -442,23 +442,27 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         button_frame = ttk.Frame(main_frame, style="TFrame")
         button_frame.pack(fill=tk.X, side=tk.BOTTOM)
 
+        # Button frame for proper alignment
+        btn_container = ttk.Frame(button_frame, style="TFrame")
+        btn_container.pack(fill=tk.X)
+
         # Cancel button
         cancel_btn = ttk.Button(
-            button_frame,
+            btn_container,
             text="Cancel",
             command=on_cancel,
             style="Secondary.TButton",
-            padding=(20, 10)
+            width=15
         )
-        cancel_btn.pack(side=tk.LEFT, padx=(0, 10))
+        cancel_btn.pack(side=tk.LEFT, padx=(0, 5))
 
         # OK button
         ok_btn = ttk.Button(
-            button_frame,
+            btn_container,
             text="Connect",
             command=on_ok,
             style="Accent.TButton",
-            padding=(20, 10)
+            width=15
         )
         ok_btn.pack(side=tk.LEFT)
 
