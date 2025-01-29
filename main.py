@@ -370,59 +370,52 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         dialog.minsize(width, height)
         dialog.resizable(False, False)
 
-        # Configure dialog with dark theme
-        dialog_frame = ttk.Frame(dialog, padding="30", style="Card.TFrame")
-        dialog_frame.pack(fill=tk.BOTH, expand=True)
+        # Main frame
+        main_frame = ttk.Frame(dialog, padding="20", style="Card.TFrame")
+        main_frame.pack(fill=tk.BOTH, expand=True)
 
-        # Header section with server info
-        header_frame = ttk.Frame(dialog_frame, style="TFrame")
-        header_frame.pack(fill=tk.X, pady=(0, 25))
+        # Header with server name
+        header_frame = ttk.Frame(main_frame, style="TFrame")
+        header_frame.pack(fill=tk.X, pady=(0, 20))
 
-        # Title with server name
         ttk.Label(
             header_frame,
             text=f"Authentication Required\n{server_config['name']}",
             style="Header.TLabel",
-            font=("Segoe UI", 14, "bold"),
-            justify=tk.CENTER
-        ).pack(anchor=tk.CENTER)
+            justify=tk.CENTER,
+            font=("Segoe UI", 14, "bold")
+        ).pack(fill=tk.X)
 
         # Input container
-        input_container = ttk.Frame(dialog_frame, style="Card.TFrame", padding="20")
-        input_container.pack(fill=tk.X, padx=20, pady=(0, 25))
+        input_frame = ttk.Frame(main_frame, style="Card.TFrame", padding=20)
+        input_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 20))
 
-        # Username field with label
-        username_frame = ttk.Frame(input_container, style="TFrame")
-        username_frame.pack(fill=tk.X, pady=(0, 15))
-
+        # Username field
         username_label = ttk.Label(
-            username_frame,
+            input_frame,
             text="Username",
             style="TLabel",
             font=("Segoe UI", 10)
         )
-        username_label.pack(anchor=tk.W, pady=(0, 5))
+        username_label.pack(fill=tk.X, pady=(0, 5))
 
         username_entry = ttk.Entry(
-            username_frame,
+            input_frame,
             font=("Segoe UI", 10)
         )
-        username_entry.pack(fill=tk.X)
+        username_entry.pack(fill=tk.X, pady=(0, 15))
 
-        # Password field with label
-        password_frame = ttk.Frame(input_container, style="TFrame")
-        password_frame.pack(fill=tk.X)
-
+        # Password field
         password_label = ttk.Label(
-            password_frame,
+            input_frame,
             text="Password",
             style="TLabel",
             font=("Segoe UI", 10)
         )
-        password_label.pack(anchor=tk.W, pady=(0, 5))
+        password_label.pack(fill=tk.X, pady=(0, 5))
 
         password_entry = ttk.Entry(
-            password_frame,
+            input_frame,
             font=("Segoe UI", 10),
             show="•"
         )
@@ -446,24 +439,26 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             dialog.destroy()
 
         # Button container
-        button_frame = ttk.Frame(dialog_frame, style="TFrame")
-        button_frame.pack(fill=tk.X, pady=(0, 10))
+        button_frame = ttk.Frame(main_frame, style="TFrame")
+        button_frame.pack(fill=tk.X, side=tk.BOTTOM)
 
+        # Cancel button
         cancel_btn = ttk.Button(
             button_frame,
             text="Cancel",
-            style="Secondary.TButton",
             command=on_cancel,
-            padding=(20, 10)  # Increase padding for better visibility
+            style="Secondary.TButton",
+            padding=(20, 10)
         )
         cancel_btn.pack(side=tk.LEFT, padx=(0, 10))
 
+        # OK button
         ok_btn = ttk.Button(
             button_frame,
             text="Connect",
-            style="Accent.TButton",
             command=on_ok,
-            padding=(20, 10)  # Increase padding for better visibility
+            style="Accent.TButton",
+            padding=(20, 10)
         )
         ok_btn.pack(side=tk.LEFT)
 
