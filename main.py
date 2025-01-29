@@ -447,7 +447,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         def on_cancel():
             dialog.destroy()
 
-        # Modern styled buttons with better visibility
+        # Button container
         button_frame = ttk.Frame(dialog_frame, style="TFrame")
         button_frame.pack(fill=tk.X, pady=(0, 10))
 
