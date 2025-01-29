@@ -54,22 +54,24 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
     def center_window(self, window, width=None, height=None):
         """Center any window on the screen"""
-        if width is None or height is None:
-            # Get window's requested dimensions
-            window.update_idletasks()
+        if width is not None and height is not None:
+            # If dimensions are provided, set them
+            window.geometry(f"{width}x{height}")
+
+        # Force window to update its geometry
+        window.update_idletasks()
+
+        if width is None:
             width = window.winfo_width()
+        if height is None:
             height = window.winfo_height()
 
-        # Get screen dimensions
-        screen_width = window.winfo_screenwidth()
-        screen_height = window.winfo_screenheight()
-
         # Calculate center position
-        center_x = int((screen_width - width) / 2)
-        center_y = int((screen_height - height) / 2)
+        x = (window.winfo_screenwidth() - width) // 2
+        y = (window.winfo_screenheight() - height) // 2
 
-        # Position window
-        window.geometry(f"{width}x{height}+{center_x}+{center_y}")
+        # Set position
+        window.geometry(f"{width}x{height}+{x}+{y}")
 
     def setup_ui(self):
         """Set up the user interface with grid layout"""
@@ -227,15 +229,17 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         window.transient(self)
         window.grab_set()  # Make modal
 
-        # Set minimum size and initial geometry
-        window.minsize(800, 600)
-        window.geometry("800x600")
+        # Set size
+        width = 800
+        height = 600
+        window.minsize(width, height)
+        window.resizable(True, True)
 
         # Configure progress window
         progress_frame = ttk.Frame(window, padding="20", style="Card.TFrame")
         progress_frame.pack(fill=tk.BOTH, expand=True)
 
-        # Add text widget for progress with larger font size
+        # Add text widget for progress
         progress_text = scrolledtext.ScrolledText(
             progress_frame,
             height=20,
@@ -248,7 +252,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         progress_text.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
 
-        # Add close button (initially enabled)
+        # Add close button
         close_btn = ttk.Button(
             progress_frame,
             text=get_text('close'),
@@ -257,8 +261,8 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         close_btn.pack(fill=tk.X)
 
-        # Center the window on screen
-        self.center_window(window, 800, 600)
+        # Center the window
+        self.center_window(window, width, height)
 
         return window, progress_text, close_btn
 
@@ -358,11 +362,11 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         dialog = tk.Toplevel(self)
         dialog.title("Server Credentials")
         dialog.transient(self)
-        dialog.grab_set()
+        dialog.grab_set()  # Make modal
 
-        # Set fixed size for credential dialog
+        # Set fixed size and make non-resizable
         width = 400
-        height = 250
+        height = 280
         dialog.minsize(width, height)
         dialog.resizable(False, False)
 
@@ -370,29 +374,30 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         dialog_frame = ttk.Frame(dialog, padding="20", style="Card.TFrame")
         dialog_frame.pack(fill=tk.BOTH, expand=True)
 
-        # Server info
+        # Server info with better spacing and font
         server_info = ttk.Label(
             dialog_frame,
             text=f"Enter credentials for server:\n{server_config['name']}\n{server_config['server']}",
-            style="TLabel"
+            style="TLabel",
+            justify=tk.CENTER,
+            wraplength=350  # Prevent text from being too wide
         )
-        server_info.pack(pady=(0, 10))
+        server_info.pack(pady=(0, 20))
 
-        # Username
-        username_frame = ttk.Frame(dialog_frame, style="TFrame")
-        username_frame.pack(fill=tk.X, pady=5)
-        username_label = ttk.Label(username_frame, text="Username:", style="TLabel")
-        username_label.pack(side=tk.LEFT)
-        username_entry = ttk.Entry(username_frame)
-        username_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(5, 0))
+        # Input fields container
+        input_frame = ttk.Frame(dialog_frame, style="TFrame")
+        input_frame.pack(fill=tk.X, pady=(0, 20))
+        input_frame.columnconfigure(1, weight=1)  # Make entry fields expand
 
-        # Password
-        password_frame = ttk.Frame(dialog_frame, style="TFrame")
-        password_frame.pack(fill=tk.X, pady=5)
-        password_label = ttk.Label(password_frame, text="Password:", style="TLabel")
-        password_label.pack(side=tk.LEFT)
-        password_entry = ttk.Entry(password_frame, show="*")
-        password_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(5, 0))
+        # Username with proper grid layout
+        ttk.Label(input_frame, text="Username:", style="TLabel").grid(row=0, column=0, sticky="e", padx=(0, 10), pady=5)
+        username_entry = ttk.Entry(input_frame)
+        username_entry.grid(row=0, column=1, sticky="ew", pady=5)
+
+        # Password with proper grid layout
+        ttk.Label(input_frame, text="Password:", style="TLabel").grid(row=1, column=0, sticky="e", padx=(0, 10), pady=5)
+        password_entry = ttk.Entry(input_frame, show="*")
+        password_entry.grid(row=1, column=1, sticky="ew", pady=5)
 
         # Get existing credentials
         server_id = f"{server_config['server']}_{server_config['serverInstance']}"
@@ -401,7 +406,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             username_entry.insert(0, existing_creds['username'])
             password_entry.insert(0, existing_creds['password'])
 
-        # Buttons
+        # Button container with better spacing
         button_frame = ttk.Frame(dialog_frame, style="TFrame")
         button_frame.pack(fill=tk.X, pady=(20, 0))
 
@@ -415,28 +420,32 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         def on_cancel():
             dialog.destroy()
 
+        # Buttons with proper spacing
         ok_btn = ttk.Button(
             button_frame,
             text="OK",
             command=on_ok,
-            style="Accent.TButton"
+            style="Accent.TButton",
+            width=10
         )
-        ok_btn.pack(side=tk.LEFT, padx=(0, 5))
+        ok_btn.pack(side=tk.LEFT, padx=(0, 10))
 
         cancel_btn = ttk.Button(
             button_frame,
             text="Cancel",
             command=on_cancel,
-            style="Accent.TButton"
+            style="Accent.TButton",
+            width=10
         )
         cancel_btn.pack(side=tk.LEFT)
 
-        # Center the dialog before waiting
+        # Center the dialog
         self.center_window(dialog, width, height)
+
+        # Make dialog modal
         dialog.wait_window()
 
         return result['username'], result['password']
-
 
     def handle_app_drop(self, file_path):
         """Handle dropping an app file"""
@@ -690,40 +699,9 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             messagebox.showerror("Error", get_text('select_server_test'))
             return
 
-        # Create progress dialog
-        progress_window = tk.Toplevel(self)
-        progress_window.title(get_text('connection_test_progress'))
-        progress_window.minsize(800, 600)  # Increased size
-        progress_window.geometry("800x600")
-        self.center_window(progress_window)
+        # Create and show progress window
+        progress_window, progress_text, close_btn = self.show_progress_window(get_text('connection_test_progress'))
 
-        # Configure progress window
-        progress_frame = ttk.Frame(progress_window, padding="20", style="Card.TFrame")
-        progress_frame.pack(fill=tk.BOTH, expand=True)
-
-        # Add text widget for progress
-        progress_text = scrolledtext.ScrolledText(
-            progress_frame,
-            height=20,  # Increased height
-            font=("Consolas", 11),  # Slightly larger font
-            relief="flat",
-            borderwidth=0,
-            highlightthickness=0,
-            padx=10,
-            pady=10
-        )
-        progress_text.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
-
-        # Add close button (initially disabled)
-        close_btn = ttk.Button(
-            progress_frame,
-            text=get_text('close'),
-            command=progress_window.destroy,
-            style="Accent.TButton"
-        )
-        close_btn.pack(fill=tk.X)
-
-        # Update progress text
         def update_progress(message):
             progress_text.insert(tk.END, f"{message}\n")
             progress_text.see(tk.END)
