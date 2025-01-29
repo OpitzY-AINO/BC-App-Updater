@@ -6,7 +6,7 @@ import os
 from ui.drag_drop import DragDropZone
 from ui.styles import apply_styles
 from utils.json_parser import parse_server_config
-from utils.powershell_manager import execute_powershell, publish_to_environment, test_server_connection
+from utils.powershell_manager import publish_to_environment, test_server_connection
 from utils.config_manager import ConfigurationManager
 from utils.translations import get_text
 
@@ -688,42 +688,6 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
                 get_text('test_complete'),
                 get_text('all_tests_successful')
             )
-
-            # Update progress text
-            def update_progress(message):
-                progress_text.insert(tk.END, f"{message}\n")
-                progress_text.see(tk.END)
-                progress_text.update()
-
-            # Test connection to each selected server
-            test_results = []
-            for config in selected_configs:
-                update_progress(get_text('testing_connection', server=config['name']))
-                success, message = test_server_connection(config)
-                test_results.append((config['name'], success, message))
-
-                # Update progress with result
-                status = "✓" if success else "✗"
-                update_progress(f"{status} {message}")
-
-            # Show final summary
-            update_progress(f"\n{get_text('test_summary')}")
-            successful = sum(1 for _, success, _ in test_results if success)
-            failed = len(test_results) - successful
-            update_progress(get_text('successful', count=successful))
-            update_progress(get_text('failed', count=failed))
-
-            # Show error message if any tests failed
-            if failed > 0:
-                messagebox.showerror(
-                    get_text('test_complete'),
-                    get_text('test_complete_with_errors', count=failed)
-                )
-            else:
-                messagebox.showinfo(
-                    get_text('test_complete'),
-                    get_text('all_tests_successful')
-                )
 
 
 def preprocess_json_text(json_text):
