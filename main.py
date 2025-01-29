@@ -54,13 +54,14 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
     def center_window(self, window, width=None, height=None):
         """Center any window on the screen"""
+        # If dimensions are provided, set them first
         if width is not None and height is not None:
-            # If dimensions are provided, set them
             window.geometry(f"{width}x{height}")
 
         # Force window to update its geometry
         window.update_idletasks()
 
+        # Get window size (either provided or current)
         if width is None:
             width = window.winfo_width()
         if height is None:
@@ -229,15 +230,13 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         window.transient(self)
         window.grab_set()  # Make modal
 
-        # Set size
-        width = 800
-        height = 600
-        window.minsize(width, height)
-        window.resizable(True, True)
+        # Configure window background
+        window.configure(background='#1e1e2e')
 
-        # Configure progress window
+        # Main frame with padding
         progress_frame = ttk.Frame(window, padding="20", style="Card.TFrame")
         progress_frame.pack(fill=tk.BOTH, expand=True)
+        progress_frame.configure(style="Dark.TFrame")
 
         # Add text widget for progress
         progress_text = scrolledtext.ScrolledText(
@@ -261,7 +260,10 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         close_btn.pack(fill=tk.X)
 
-        # Center the window
+        # Set size and center
+        width = 800
+        height = 600
+        window.minsize(width, height)
         self.center_window(window, width, height)
 
         return window, progress_text, close_btn
@@ -364,24 +366,17 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         dialog.transient(self)
         dialog.grab_set()
 
-        # Set fixed size
+        # Configure dialog background and size
+        dialog.configure(background='#1e1e2e')
         width = 400
-        height = 300  # Increased height
+        height = 300
         dialog.minsize(width, height)
         dialog.resizable(False, False)
 
-        # Configure dialog background
-        dialog.configure(background='#1e1e2e')
-
         # Main frame with padding
         main_frame = ttk.Frame(dialog, padding=20, style="Card.TFrame")
-        main_frame.grid(row=0, column=0, sticky="nsew")
+        main_frame.pack(fill=tk.BOTH, expand=True)
         main_frame.configure(style="Dark.TFrame")
-
-        # Configure grid
-        dialog.grid_rowconfigure(0, weight=1)
-        dialog.grid_columnconfigure(0, weight=1)
-        main_frame.grid_columnconfigure(0, weight=1)
 
         # Header
         header_text = f"Authentication Required\n{server_config['name']}"
@@ -394,7 +389,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             background='#1e1e2e',
             foreground='#cdd6f4'
         )
-        header.grid(row=0, column=0, columnspan=2, pady=(0, 20))
+        header.pack(pady=(0, 20))
 
         # Username
         username_label = ttk.Label(
@@ -403,9 +398,9 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             background='#1e1e2e',
             foreground='#cdd6f4'
         )
-        username_label.grid(row=1, column=0, sticky="w", pady=(0, 5))
+        username_label.pack(anchor="w", pady=(0, 5))
         username_entry = ttk.Entry(main_frame)
-        username_entry.grid(row=2, column=0, sticky="ew", pady=(0, 15))
+        username_entry.pack(fill=tk.X, pady=(0, 15))
 
         # Password
         password_label = ttk.Label(
@@ -414,16 +409,9 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             background='#1e1e2e',
             foreground='#cdd6f4'
         )
-        password_label.grid(row=3, column=0, sticky="w", pady=(0, 5))
+        password_label.pack(anchor="w", pady=(0, 5))
         password_entry = ttk.Entry(main_frame, show="•")
-        password_entry.grid(row=4, column=0, sticky="ew", pady=(0, 20))
-
-        # Button frame
-        button_frame = ttk.Frame(main_frame)
-        button_frame.grid(row=5, column=0, sticky="ew")
-        button_frame.configure(style="Dark.TFrame")
-        button_frame.grid_columnconfigure(0, weight=1)
-        button_frame.grid_columnconfigure(1, weight=1)
+        password_entry.pack(fill=tk.X, pady=(0, 20))
 
         result = {'username': None, 'password': None}
 
@@ -435,24 +423,31 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         def on_cancel():
             dialog.destroy()
 
-        # Buttons - same size and styling
+        # Button frame
+        button_frame = ttk.Frame(main_frame)
+        button_frame.pack(fill=tk.X, pady=(10, 0))
+        button_frame.configure(style="Dark.TFrame")
+
+        # Create equal-width buttons with consistent styling
+        button_width = 15
         cancel_btn = ttk.Button(
             button_frame,
             text="Cancel",
             command=on_cancel,
-            style="Secondary.TButton",
-            width=15
+            style="Accent.TButton",
+            width=button_width
         )
-        cancel_btn.grid(row=0, column=0, padx=5, sticky="e")
-
-        ok_btn = ttk.Button(
+        connect_btn = ttk.Button(
             button_frame,
             text="Connect",
             command=on_ok,
             style="Accent.TButton",
-            width=15
+            width=button_width
         )
-        ok_btn.grid(row=0, column=1, padx=5, sticky="w")
+
+        # Pack buttons with equal spacing
+        cancel_btn.pack(side=tk.LEFT, padx=(0, 5), expand=True)
+        connect_btn.pack(side=tk.RIGHT, padx=(5, 0), expand=True)
 
         # Get existing credentials
         server_id = f"{server_config['server']}_{server_config['serverInstance']}"
