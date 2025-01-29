@@ -9,6 +9,9 @@ from utils.json_parser import parse_server_config
 from utils.powershell_manager import publish_to_environment, test_server_connection
 from utils.config_manager import ConfigurationManager
 from utils.translations import get_text
+from utils.credential_manager import CredentialManager
+from utils.app_publisher import AppPublisher
+import uuid
 
 class BusinessCentralPublisher(TkinterDnD.Tk):
     def __init__(self):
@@ -37,13 +40,13 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         # Application state
         self.app_file_path = None
         self.config_manager = ConfigurationManager()
+        self.credential_manager = CredentialManager()
 
         # Configure main window grid weights
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
         self.setup_ui()
-        
         self.center_window(self)
 
         # Load saved configurations
@@ -215,7 +218,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             style="Accent.TButton"
         )
         self.publish_button.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(10, 10))
-        
+
     def center_window(self, window):
         window.update_idletasks()
         width = window.winfo_width()
@@ -290,53 +293,48 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         ):
             return
 
+        # Create and show progress window
+        progress_window, progress_text, close_btn = self.show_progress_window(
+            get_text('deployment_progress')
+        )
+
+        def update_progress(message):
+            progress_text.insert(tk.END, f"{message}\n")
+            progress_text.see(tk.END)
+            progress_text.update()
+
         deployment_results = []
 
         try:
-            # Create progress dialog
-            progress_window = tk.Toplevel(self)
-            progress_window.title(get_text('deployment_progress'))
-            progress_window.geometry("400x300")
-            self.center_window(progress_window)
-            
-            # Configure progress window
-            progress_frame = ttk.Frame(progress_window, padding="20", style="Card.TFrame")
-            progress_frame.pack(fill=tk.BOTH, expand=True)
-
-            # Add text widget for progress
-            progress_text = scrolledtext.ScrolledText(
-                progress_frame,
-                height=10,
-                font=("Consolas", 10),
-                relief="flat",
-                borderwidth=0,
-                highlightthickness=0,
-                padx=10,
-                pady=10
-            )
-            progress_text.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
-
-            # Add close button (initially disabled)
-            close_btn = ttk.Button(
-                progress_frame,
-                text=get_text('close'),
-                command=progress_window.destroy,
-                state="disabled",
-                style="Accent.TButton"
-            )
-            close_btn.pack(fill=tk.X)
-
-            # Update progress text
-            def update_progress(message):
-                progress_text.insert(tk.END, f"{message}\n")
-                progress_text.see(tk.END)
-                progress_text.update()
-
-            # Deploy to each selected server
             for config in selected_configs:
                 update_progress(get_text('deploying_to', server=config['name']))
 
-                success, message = publish_to_environment(self.app_file_path, config)
+                # Handle different server types
+                if config['environmentType'].lower() == 'onprem':
+                    # Get credentials for OnPrem server
+                    server_id = f"{config['server']}_{config['serverInstance']}"
+                    username, password = self.show_credential_dialog(config)
+
+                    if not username or not password:
+                        update_progress(f"Deployment cancelled for {config['name']}: No credentials provided")
+                        deployment_results.append((config['name'], False, "No credentials provided"))
+                        continue
+
+                    # Store credentials if successful
+                    success, message = AppPublisher.publish_to_onprem(
+                        self.app_file_path,
+                        config,
+                        username,
+                        password
+                    )
+
+                    if success:
+                        self.credential_manager.store_credentials(server_id, username, password)
+                else:
+                    # Sandbox deployment not implemented yet
+                    success = False
+                    message = "Sandbox deployment not implemented yet"
+
                 deployment_results.append((config['name'], success, message))
 
                 # Update progress with result
@@ -368,6 +366,85 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         except Exception as e:
             messagebox.showerror("Error", str(e))
 
+    def show_credential_dialog(self, server_config):
+        """Show dialog to input server credentials"""
+        dialog = tk.Toplevel(self)
+        dialog.title("Server Credentials")
+        dialog.transient(self)
+        dialog.grab_set()
+
+        # Configure dialog
+        dialog_frame = ttk.Frame(dialog, padding="20", style="Card.TFrame")
+        dialog_frame.pack(fill=tk.BOTH, expand=True)
+
+        # Server info
+        server_info = ttk.Label(
+            dialog_frame,
+            text=f"Enter credentials for server:\n{server_config['name']}\n{server_config['server']}",
+            style="TLabel"
+        )
+        server_info.pack(pady=(0, 10))
+
+        # Username
+        username_frame = ttk.Frame(dialog_frame, style="TFrame")
+        username_frame.pack(fill=tk.X, pady=5)
+        username_label = ttk.Label(username_frame, text="Username:", style="TLabel")
+        username_label.pack(side=tk.LEFT)
+        username_entry = ttk.Entry(username_frame)
+        username_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(5, 0))
+
+        # Password
+        password_frame = ttk.Frame(dialog_frame, style="TFrame")
+        password_frame.pack(fill=tk.X, pady=5)
+        password_label = ttk.Label(password_frame, text="Password:", style="TLabel")
+        password_label.pack(side=tk.LEFT)
+        password_entry = ttk.Entry(password_frame, show="*")
+        password_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(5, 0))
+
+        # Get existing credentials
+        server_id = f"{server_config['server']}_{server_config['serverInstance']}"
+        existing_creds = self.credential_manager.get_credentials(server_id)
+        if existing_creds:
+            username_entry.insert(0, existing_creds['username'])
+            password_entry.insert(0, existing_creds['password'])
+
+        # Buttons
+        button_frame = ttk.Frame(dialog_frame, style="TFrame")
+        button_frame.pack(fill=tk.X, pady=(20, 0))
+
+        result = {'username': None, 'password': None}
+
+        def on_ok():
+            result['username'] = username_entry.get()
+            result['password'] = password_entry.get()
+            dialog.destroy()
+
+        def on_cancel():
+            dialog.destroy()
+
+        ok_btn = ttk.Button(
+            button_frame,
+            text="OK",
+            command=on_ok,
+            style="Accent.TButton"
+        )
+        ok_btn.pack(side=tk.LEFT, padx=(0, 5))
+
+        cancel_btn = ttk.Button(
+            button_frame,
+            text="Cancel",
+            command=on_cancel,
+            style="Accent.TButton"
+        )
+        cancel_btn.pack(side=tk.LEFT)
+
+        # Center dialog
+        self.center_window(dialog, 400, 250)
+        dialog.wait_window()
+
+        return result['username'], result['password']
+
+
     def handle_app_drop(self, file_path):
         """Handle dropping an app file"""
         if file_path.lower().endswith('.app'):
@@ -377,9 +454,11 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             messagebox.showerror("Error", get_text('invalid_app'))
 
     def clear_all(self):
-        """Clear server configurations"""
+        """Clear server configurations and associated credentials"""
         # Clear configurations from manager
         self.config_manager.clear_configurations()
+        # Clear all stored credentials
+        self.credential_manager.clear_all_credentials()
         # Update server list to reflect cleared state
         self.update_server_list()
         # Reset drop zone text
@@ -454,7 +533,6 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         # Update publish button state after loading list
         self.update_publish_button_state()
-
 
     def handle_config_drop(self, file_path):
         """Handle dropping a configuration file"""
