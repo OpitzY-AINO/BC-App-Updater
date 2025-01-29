@@ -52,12 +52,13 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         # Load saved configurations
         self.update_server_list()
 
-    def center_window(self, window, width=800, height=600):
+    def center_window(self, window, width=None, height=None):
         """Center any window on the screen"""
-        # Configure window attributes
-        window.resizable(False, False)
-        window.geometry(f"{width}x{height}")
-        window.update_idletasks()
+        if width is None or height is None:
+            # Get window's requested dimensions
+            window.update_idletasks()
+            width = window.winfo_width()
+            height = window.winfo_height()
 
         # Get screen dimensions
         screen_width = window.winfo_screenwidth()
@@ -219,14 +220,6 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         self.publish_button.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(10, 10))
 
-    def center_window(self, window):
-        window.update_idletasks()
-        width = window.winfo_width()
-        height = window.winfo_height()
-        x = (window.winfo_screenwidth() // 2) - (width // 2)
-        y = (window.winfo_screenheight() // 2) - (height // 2)
-        window.geometry(f'{width}x{height}+{x}+{y}')
-
     def show_progress_window(self, title):
         """Create and center a progress window"""
         window = tk.Toplevel(self)
@@ -234,7 +227,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         window.transient(self)
         window.grab_set()  # Make modal
 
-        # Set minimum size
+        # Set minimum size and initial geometry
         window.minsize(800, 600)
         window.geometry("800x600")
 
@@ -245,8 +238,8 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         # Add text widget for progress with larger font size
         progress_text = scrolledtext.ScrolledText(
             progress_frame,
-            height=20,  # Increased height
-            font=("Consolas", 11),  # Slightly larger font
+            height=20,
+            font=("Consolas", 11),
             relief="flat",
             borderwidth=0,
             highlightthickness=0,
@@ -263,6 +256,9 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             style="Accent.TButton"
         )
         close_btn.pack(fill=tk.X)
+
+        # Center the window on screen
+        self.center_window(window, 800, 600)
 
         return window, progress_text, close_btn
 
@@ -364,6 +360,12 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         dialog.transient(self)
         dialog.grab_set()
 
+        # Set fixed size for credential dialog
+        width = 400
+        height = 250
+        dialog.minsize(width, height)
+        dialog.resizable(False, False)
+
         # Configure dialog
         dialog_frame = ttk.Frame(dialog, padding="20", style="Card.TFrame")
         dialog_frame.pack(fill=tk.BOTH, expand=True)
@@ -429,8 +431,8 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         cancel_btn.pack(side=tk.LEFT)
 
-        # Center dialog
-        self.center_window(dialog, 400, 250)
+        # Center the dialog before waiting
+        self.center_window(dialog, width, height)
         dialog.wait_window()
 
         return result['username'], result['password']
@@ -553,8 +555,6 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         popup.minsize(600, 400)
         self.center_window(popup)
 
-        # Center the popup window with improved function
-        self.center_window(popup)
 
         # Configure popup grid
         popup.grid_rowconfigure(0, weight=1)
