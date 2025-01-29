@@ -391,7 +391,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         input_container = ttk.Frame(dialog_frame, style="Card.TFrame", padding="20")
         input_container.pack(fill=tk.X, padx=20, pady=(0, 25))
 
-        # Username field with label and icon
+        # Username field with label
         username_frame = ttk.Frame(input_container, style="TFrame")
         username_frame.pack(fill=tk.X, pady=(0, 15))
 
@@ -405,8 +405,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         username_entry = ttk.Entry(
             username_frame,
-            font=("Segoe UI", 10),
-            width=30
+            font=("Segoe UI", 10)
         )
         username_entry.pack(fill=tk.X)
 
@@ -425,7 +424,6 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         password_entry = ttk.Entry(
             password_frame,
             font=("Segoe UI", 10),
-            width=30,
             show="•"
         )
         password_entry.pack(fill=tk.X)
@@ -456,8 +454,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             text="Cancel",
             style="Secondary.TButton",
             command=on_cancel,
-            width=15,
-            padding=(10, 5)  # Add more padding for better visibility
+            padding=(20, 10)  # Increase padding for better visibility
         )
         cancel_btn.pack(side=tk.LEFT, padx=(0, 10))
 
@@ -466,8 +463,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             text="Connect",
             style="Accent.TButton",
             command=on_ok,
-            width=15,
-            padding=(10, 5)  # Add more padding for better visibility
+            padding=(20, 10)  # Increase padding for better visibility
         )
         ok_btn.pack(side=tk.LEFT)
 
