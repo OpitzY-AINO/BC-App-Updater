@@ -422,11 +422,11 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
                 # Handle timeout for remaining deployments
                 remaining = len(self.selected_configs) - len(self.deployment_results)
                 if remaining > 0:
-                    self.update_progress("\nTimeout reached, marking remaining deployments as successful...")
+                    self.update_progress("\nTimeout reached, marking remaining deployments as failed...")
                     for config in self.selected_configs:
                         if not any(result[0] == config['name'] for result in self.deployment_results):
-                            self.deployment_results.append((config['name'], True, "Deployment in progress (timeout reached)"))
-                            self.update_progress(f"✓ {config['name']}: Deployment in progress (timeout reached)")
+                            self.deployment_results.append((config['name'], False, "Operation timed out"))
+                            self.update_progress(f"✗ {config['name']}: Operation timed out")
 
                 self.show_summary()
                 return
@@ -440,17 +440,25 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
                     server_id, config = result[1], result[2]
                     logger.debug(f"Showing credential dialog for {server_id}")
 
-                    def show_dialog():
-                        username, password = self.show_credential_dialog(config)
-                        if username and password:
-                            logger.debug(f"Credentials provided for {server_id}")
-                            self.result_queue.put(('credentials_provided', username, password))
-                        else:
-                            logger.debug(f"No credentials provided for {server_id}")
+                    # Create a function to show the dialog and handle the result
+                    def show_credentials():
+                        try:
+                            username, password = self.show_credential_dialog(config)
+                            logger.debug(f"Dialog completed for {server_id}")
+
+                            if username and password:
+                                logger.debug(f"Credentials provided for {server_id}")
+                                self.result_queue.put(('credentials_provided', username, password))
+                            else:
+                                logger.debug(f"No credentials provided for {server_id}")
+                                self.result_queue.put(('credentials_failed',))
+                        except Exception as dialog_error:
+                            logger.error(f"Error showing credential dialog: {str(dialog_error)}")
                             self.result_queue.put(('credentials_failed',))
 
-                    # Schedule dialog to run in main thread
-                    self.after(0, show_dialog)
+                    # Schedule the dialog to run in the main thread
+                    logger.debug(f"Scheduling credential dialog for {server_id}")
+                    self.after(100, show_credentials)
 
                 elif result[0] == 'progress':
                     # Handle progress update
@@ -469,7 +477,19 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
                     self.show_summary()
                     return
 
-            except Empty:  # Using the imported Empty exception directly
+                elif result[0] == 'failed':
+                    # Handle failed operation
+                    server_name, message = result[1], result[2]
+                    logger.warning(f"Operation failed for {server_name}: {message}")
+                    self.deployment_results.append((server_name, False, message))
+                    self.update_progress(f"✗ {server_name}: {message}")
+
+                    # Check if all servers are processed
+                    if len(self.deployment_results) == len(self.selected_configs):
+                        self.show_summary()
+                        return
+
+            except Empty:
                 # No results available, schedule next check
                 pass
 
