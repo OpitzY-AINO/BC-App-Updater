@@ -3,3 +3,4 @@ cryptography
 requests
 cryptography
 PyQt6
+customtkinter

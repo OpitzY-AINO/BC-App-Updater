@@ -29,6 +29,7 @@ class PublishWorker(threading.Thread):
         self.credential_manager = credential_manager
         self.result_queue = result_queue
         self.daemon = True
+        logger.debug("PublishWorker initialized")
 
     def run(self):
         try:
@@ -36,6 +37,7 @@ class PublishWorker(threading.Thread):
             for config in self.configs:
                 if config['environmentType'].lower() == 'onprem':
                     server_id = f"{config['server']}_{config['serverInstance']}"
+                    logger.debug(f"Processing server: {server_id}")
 
                     # Try to get existing credentials first
                     existing_creds = self.credential_manager.get_credentials(server_id)
@@ -48,10 +50,10 @@ class PublishWorker(threading.Thread):
                         logger.debug(f"Requesting credentials for {server_id}")
                         self.result_queue.put(('need_credentials', server_id, config))
 
-                        # Wait for credentials response
+                        # Wait for credentials response with timeout
                         try:
                             logger.debug(f"Waiting for credentials for {server_id}")
-                            response = self.result_queue.get(timeout=60)  # 1-minute timeout for credentials
+                            response = self.result_queue.get(timeout=60)  # 1-minute timeout
                             if response[0] != 'credentials_provided':
                                 logger.warning(f"No credentials provided for {server_id}")
                                 self.result_queue.put(('failed', config['name'], "No credentials provided"))
@@ -365,12 +367,16 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             messagebox.showerror("Error", get_text('select_server'))
             return
 
+        logger.debug("Starting publish process")
+        logger.debug(f"Selected configs: {len(self.selected_configs)}")
+
         # Create and show progress window
         progress_window, progress_text, close_btn = self.show_progress_window(
             get_text('deployment_progress')
         )
 
         def update_progress(message):
+            logger.debug(f"Progress update: {message}")
             progress_text.insert(tk.END, f"{message}\n")
             progress_text.see(tk.END)
             progress_text.update()
@@ -382,8 +388,15 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         self.timeout = datetime.now() + timedelta(minutes=10)
 
         # Create and start the worker thread
-        worker = PublishWorker(self.app_file_path, self.selected_configs, self.credential_manager, self.result_queue)
+        logger.debug("Creating worker thread")
+        worker = PublishWorker(
+            self.app_file_path,
+            self.selected_configs,
+            self.credential_manager,
+            self.result_queue
+        )
         worker.start()
+        logger.debug("Worker thread started")
 
         def show_summary():
             update_progress(f"\n{get_text('deployment_summary')}")
@@ -392,6 +405,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             update_progress(get_text('successful', count=successful))
             update_progress(get_text('failed', count=failed))
             close_btn.configure(state="normal")
+            logger.debug("Summary displayed")
 
         self.show_summary = show_summary
 
@@ -446,7 +460,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
                     self.show_summary()
                     return
 
-            except Empty:
+            except Empty:  # Using the imported Empty exception directly
                 # No results available, schedule next check
                 pass
 
@@ -797,7 +811,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             messagebox.showerror("Error", get_text('select_server_test'))
             return
 
-        # Create and show progress window
+                # Create and show progress window
         progress_window, progress_text, close_btn = self.show_progress_window(get_text('connection_test_progress'))
 
         def update_progress(message):

@@ -1,0 +1,71 @@
+Add-Type -AssemblyName System.Net.Http
+
+# Server- und Verbindungsparameter
+$Server = "opitzybc"
+$Port = "7049"  # Falls erforderlich
+$Instance = "BC"
+$Tenant = "default"
+
+# Business Central-URL für das Publishing
+$url= "http://${Server}:${Port}/${Instance}/dev/apps?tenant=$Tenant&SchemaUpdateMode=forcesync&DependencyPublishingOption=default"
+
+# Anmeldedaten für Basic Authentication
+$Username = "opitzy"  # Ihr Business Central Benutzername
+$Password = "Qwertz@123456#"  # Ihr Business Central Passwort
+$AuthHeader = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("$Username`:$Password"))
+
+# Pfad zur AL-App
+$appFile = "C:\Git\Repositories\Allgeier\aino.appsource.aem\AEM Base\app\Allgeier Inovar GmbH_AURELO Energiepark Manager_23.0.392.0.app"
+$appName = [System.IO.Path]::GetFileName($appFile)
+
+# Initialisiere HttpClient mit Authentifizierungs-Header
+$HttpClient = [System.Net.Http.HttpClient]::new()
+$HttpClient.DefaultRequestHeaders.Add("Authorization", $AuthHeader)
+
+# Multipart-FormData-Inhalt erstellen
+$multipartContent = [System.Net.Http.MultipartFormDataContent]::new()
+$FileStream = [System.IO.FileStream]::new($appFile, [System.IO.FileMode]::Open)
+
+try {
+    # Header für die Datei setzen
+    $fileHeader = [System.Net.Http.Headers.ContentDispositionHeaderValue]::new("form-data")
+    $fileHeader.Name = "file"  # Business Central erwartet "file"
+    $fileHeader.FileName = "$appName"
+    $fileHeader.FileNameStar = "$appName"
+
+    # Datei-Stream vorbereiten
+    $fileContent = [System.Net.Http.StreamContent]::new($FileStream)
+    $fileContent.Headers.ContentDisposition = $fileHeader
+    $multipartContent.Add($fileContent)
+
+    Write-Host "Publishing $appName to $url"
+
+    # HTTP POST-Anfrage senden
+    $result = $HttpClient.PostAsync($url, $multipartContent).GetAwaiter().GetResult()
+
+    # Fehlerbehandlung für nicht-erfolgreiche Antworten
+    if (!$result.IsSuccessStatusCode) {
+        $message = "Status Code $($result.StatusCode) : $($result.ReasonPhrase)"
+        try {
+            $resultMsg = $result.Content.ReadAsStringAsync().Result
+            try {
+                $json = $resultMsg | ConvertFrom-Json
+                $message += "`n$($json.Message)"
+            }
+            catch {
+                $message += "`n$resultMsg"
+            }
+        }
+        catch {}
+        throw $message
+    } else {
+        Write-Host "App erfolgreich veröffentlicht!"
+    }
+}
+catch {
+    Write-Host "Fehler: $_"
+}
+finally {
+    # Datei-Stream schließen
+    $FileStream.Close()
+}

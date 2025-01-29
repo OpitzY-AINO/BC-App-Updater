@@ -19,6 +19,10 @@ args = "BC Publisher GUI"
 task = "workflow.run"
 args = "Qt Publisher GUI"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "CTk Publisher GUI"
+
 [[workflows.workflow]]
 name = "BC Publisher GUI"
 author = "agent"
@@ -46,6 +50,20 @@ task = "packager.installForAll"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python main_qt.py"
+
+[[workflows.workflow]]
+name = "CTk Publisher GUI"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python main_ctk.py"
 
 [deployment]
 run = ["sh", "-c", "python main.py"]
