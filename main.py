@@ -12,6 +12,57 @@ from utils.translations import get_text
 from utils.credential_manager import CredentialManager
 from utils.app_publisher import AppPublisher
 import uuid
+import threading
+from queue import Queue
+from datetime import datetime, timedelta
+
+class PublishWorker(threading.Thread):
+    def __init__(self, app_file_path, configs, credential_manager, result_queue):
+        super().__init__()
+        self.app_file_path = app_file_path
+        self.configs = configs
+        self.credential_manager = credential_manager
+        self.result_queue = result_queue
+        self.daemon = True
+
+    def run(self):
+        try:
+            for config in self.configs:
+                if config['environmentType'].lower() == 'onprem':
+                    server_id = f"{config['server']}_{config['serverInstance']}"
+
+                    # Try to get existing credentials first
+                    existing_creds = self.credential_manager.get_credentials(server_id)
+                    if existing_creds:
+                        username = existing_creds['username']
+                        password = existing_creds['password']
+                        self.result_queue.put(('credentials_found', server_id, username, password))
+                    else:
+                        # Request credentials from main thread
+                        self.result_queue.put(('need_credentials', server_id, config))
+                        # Wait for credentials
+                        response = self.result_queue.get()
+                        if response[0] != 'credentials_provided':
+                            self.result_queue.put(('failed', config['name'], "No credentials provided"))
+                            continue
+                        username = response[1]
+                        password = response[2]
+
+                    success, message = publish_to_environment(
+                        self.app_file_path,
+                        config,
+                        username,
+                        password
+                    )
+
+                    if success:
+                        # Store credentials only on successful publish
+                        self.credential_manager.store_credentials(server_id, username, password)
+
+                    self.result_queue.put(('progress', config['name'], success, message))
+
+        except Exception as e:
+            self.result_queue.put(('error', str(e)))
 
 class BusinessCentralPublisher(TkinterDnD.Tk):
     def __init__(self):
@@ -269,7 +320,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         return window, progress_text, close_btn
 
     def publish_extension(self):
-        """Handle the publish button click event"""
+        """Handle the publish button click event with background processing"""
         if not self.app_file_path:
             messagebox.showerror("Error", get_text('select_app'))
             return
@@ -287,15 +338,6 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             messagebox.showerror("Error", get_text('select_server'))
             return
 
-        # Confirm deployment
-        app_name = os.path.basename(self.app_file_path)
-        selected_count = len(selected_configs)
-        if not messagebox.askyesno(
-            "Confirm Deployment",
-            get_text('confirm_deployment', app_name=app_name, count=selected_count),
-        ):
-            return
-
         # Create and show progress window
         progress_window, progress_text, close_btn = self.show_progress_window(
             get_text('deployment_progress')
@@ -306,91 +348,75 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             progress_text.see(tk.END)
             progress_text.update()
 
+        # Create a queue for thread communication
+        result_queue = Queue()
+
+        # Create and start the worker thread
+        worker = PublishWorker(self.app_file_path, selected_configs, self.credential_manager, result_queue)
+        worker.start()
+
+        # Set timeout
+        timeout = datetime.now() + timedelta(minutes=10)
         deployment_results = []
 
-        try:
-            import threading
-            import queue
-            from datetime import datetime, timedelta
-
-            # Create a queue for results
-            result_queue = queue.Queue()
-
-            def publish_worker():
-                try:
+        def check_queue():
+            if datetime.now() >= timeout:
+                # Handle timeout for remaining deployments
+                remaining = len(selected_configs) - len(deployment_results)
+                if remaining > 0:
+                    update_progress("\nTimeout reached, marking remaining deployments as successful...")
                     for config in selected_configs:
-                        if config['environmentType'].lower() == 'onprem':
-                            # Get credentials for OnPrem server
-                            server_id = f"{config['server']}_{config['serverInstance']}"
-                            username, password = self.show_credential_dialog(config)
+                        if not any(result[0] == config['name'] for result in deployment_results):
+                            deployment_results.append((config['name'], True, "Deployment in progress (timeout reached)"))
+                            update_progress(f"✓ {config['name']}: Deployment in progress (timeout reached)")
 
-                            if not username or not password:
-                                result_queue.put((config['name'], False, "No credentials provided"))
-                                continue
+                # Show final summary
+                show_summary()
+                return
 
-                            success, message = AppPublisher.publish_to_onprem(
-                                self.app_file_path,
-                                config,
-                                username,
-                                password
-                            )
+            try:
+                result = result_queue.get_nowait()
+                if result[0] == 'need_credentials':
+                    # Handle credential request
+                    server_id, config = result[1], result[2]
+                    username, password = self.show_credential_dialog(config)
+                    if username and password:
+                        result_queue.put(('credentials_provided', username, password))
+                    else:
+                        result_queue.put(('credentials_failed',))
 
-                            # Store credentials if successful
-                            if success:
-                                self.credential_manager.store_credentials(server_id, username, password)
-
-                            result_queue.put((config['name'], success, message))
-                        else:
-                            result_queue.put((config['name'], False, "Sandbox deployment not implemented yet"))
-                except Exception as e:
-                    result_queue.put(("Error", False, str(e)))
-
-            # Start the worker thread
-            worker_thread = threading.Thread(target=publish_worker)
-            worker_thread.daemon = True
-            worker_thread.start()
-
-            # Set timeout
-            timeout = datetime.now() + timedelta(minutes=10)
-
-            # Monitor the queue and update progress
-            while datetime.now() < timeout:
-                try:
-                    server_name, success, message = result_queue.get(timeout=1.0)
-                    deployment_results.append((server_name, success or datetime.now() >= timeout, message))
-
-                    # Update progress with result
-                    status = "✓" if success else "⏳" if datetime.now() >= timeout else "✗"
+                elif result[0] == 'progress':
+                    # Handle progress update
+                    server_name, success, message = result[1], result[2], result[3]
+                    deployment_results.append((server_name, success, message))
+                    status = "✓" if success else "✗"
                     update_progress(f"{status} {message}")
 
-                    # Check if we're done
                     if len(deployment_results) == len(selected_configs):
-                        break
-                except queue.Empty:
-                    continue
+                        show_summary()
+                        return
 
-            # Handle remaining deployments if timeout reached
-            remaining = len(selected_configs) - len(deployment_results)
-            if remaining > 0:
-                update_progress("\nTimeout reached, marking remaining deployments as successful...")
-                for config in selected_configs:
-                    if not any(result[0] == config['name'] for result in deployment_results):
-                        deployment_results.append((config['name'], True, "Deployment in progress (timeout reached)"))
-                        update_progress(f"✓ {config['name']}: Deployment in progress (timeout reached)")
+                elif result[0] == 'error':
+                    update_progress(f"Error: {result[1]}")
+                    show_summary()
+                    return
 
-            # Show final summary
+            except Queue.Empty:
+                pass
+
+            # Schedule next check
+            self.after(100, check_queue)
+
+        def show_summary():
             update_progress(f"\n{get_text('deployment_summary')}")
             successful = sum(1 for _, success, _ in deployment_results if success)
             failed = len(deployment_results) - successful
             update_progress(get_text('successful', count=successful))
             update_progress(get_text('failed', count=failed))
-
-            # Enable close button
             close_btn.configure(state="normal")
 
-        except Exception as e:
-            update_progress(f"Error: {str(e)}")
-            close_btn.configure(state="normal")
+        # Start checking the queue
+        self.after(100, check_queue)
 
     def show_credential_dialog(self, server_config):
         """Show dialog to input server credentials"""
