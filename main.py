@@ -378,59 +378,72 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         header_frame = ttk.Frame(dialog_frame, style="TFrame")
         header_frame.pack(fill=tk.X, pady=(0, 25))
 
-        # Title
+        # Title with server name
         ttk.Label(
             header_frame,
-            text="Server Authentication Required",
+            text=f"Authentication Required\n{server_config['name']}",
             style="Header.TLabel",
-            font=("Segoe UI", 14, "bold")
+            font=("Segoe UI", 14, "bold"),
+            justify=tk.CENTER
         ).pack(anchor=tk.CENTER)
 
-        # Server info with subdued style
-        server_info = ttk.Label(
-            header_frame,
-            text=f"{server_config['name']}\n{server_config['server']}",
-            style="TLabel",
-            justify=tk.CENTER,
-            font=("Segoe UI", 10),
-        )
-        server_info.pack(pady=(10, 0), anchor=tk.CENTER)
-
-        # Input container with modern styling
+        # Input container
         input_container = ttk.Frame(dialog_frame, style="Card.TFrame", padding="20")
         input_container.pack(fill=tk.X, padx=20, pady=(0, 25))
 
-        # Username field with icon-like prefix
+        # Username field with label and icon
         username_frame = ttk.Frame(input_container, style="TFrame")
         username_frame.pack(fill=tk.X, pady=(0, 15))
 
-        ttk.Label(
+        username_label = ttk.Label(
             username_frame,
+            text="Username",
+            style="TLabel",
+            font=("Segoe UI", 10)
+        )
+        username_label.pack(anchor=tk.W, pady=(0, 5))
+
+        input_frame = ttk.Frame(username_frame, style="TFrame")
+        input_frame.pack(fill=tk.X)
+
+        ttk.Label(
+            input_frame,
             text="👤",
             style="TLabel",
             font=("Segoe UI", 12)
         ).pack(side=tk.LEFT, padx=(0, 10))
 
         username_entry = ttk.Entry(
-            username_frame,
+            input_frame,
             font=("Segoe UI", 10),
             width=30
         )
         username_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
-        # Password field with icon-like prefix
+        # Password field with label and icon
         password_frame = ttk.Frame(input_container, style="TFrame")
         password_frame.pack(fill=tk.X)
 
-        ttk.Label(
+        password_label = ttk.Label(
             password_frame,
+            text="Password",
+            style="TLabel",
+            font=("Segoe UI", 10)
+        )
+        password_label.pack(anchor=tk.W, pady=(0, 5))
+
+        input_frame = ttk.Frame(password_frame, style="TFrame")
+        input_frame.pack(fill=tk.X)
+
+        ttk.Label(
+            input_frame,
             text="🔒",
             style="TLabel",
             font=("Segoe UI", 12)
         ).pack(side=tk.LEFT, padx=(0, 10))
 
         password_entry = ttk.Entry(
-            password_frame,
+            input_frame,
             font=("Segoe UI", 10),
             width=30,
             show="•"
@@ -444,7 +457,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             username_entry.insert(0, existing_creds['username'])
             password_entry.insert(0, existing_creds['password'])
 
-        # Button container
+        # Button container with better styling
         button_frame = ttk.Frame(dialog_frame, style="TFrame")
         button_frame.pack(fill=tk.X, pady=(0, 10))
 
@@ -458,13 +471,14 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         def on_cancel():
             dialog.destroy()
 
-        # Modern styled buttons
+        # Modern styled buttons with better visibility
         cancel_btn = ttk.Button(
             button_frame,
             text="Cancel",
             style="Secondary.TButton",
             command=on_cancel,
-            width=15
+            width=15,
+            padding=(10, 5)  # Add more padding for better visibility
         )
         cancel_btn.pack(side=tk.LEFT, padx=(0, 10))
 
@@ -473,7 +487,8 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             text="Connect",
             style="Accent.TButton",
             command=on_ok,
-            width=15
+            width=15,
+            padding=(10, 5)  # Add more padding for better visibility
         )
         ok_btn.pack(side=tk.LEFT)
 
@@ -599,25 +614,23 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         """Open a popup window with a larger text editor"""
         popup = tk.Toplevel(self)
         popup.title(get_text('config_editor'))
+        popup.transient(self)
+        popup.grab_set()
 
-        # Set size
+        # Set size and make resizable
         width = 800
         height = 600
-        popup.minsize(600, 400)
+        popup.minsize(width, height)
         popup.resizable(True, True)
-
-        # Configure popup grid
-        popup.grid_rowconfigure(0, weight=1)
-        popup.grid_columnconfigure(0, weight=1)
 
         # Create main frame with padding
         editor_frame = ttk.Frame(popup, style="Card.TFrame", padding="20")
-        editor_frame.grid(row=0, column=0, sticky="nsew")
+        editor_frame.pack(fill=tk.BOTH, expand=True)
         editor_frame.grid_rowconfigure(0, weight=1)
         editor_frame.grid_columnconfigure(0, weight=1)
 
         # Create text widget with syntax highlighting
-        editor = tk.Text(
+        editor = scrolledtext.ScrolledText(
             editor_frame,
             font=("Consolas", 12),
             relief="flat",
@@ -626,31 +639,19 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             padx=10,
             pady=10
         )
-
-        # Create scrollbar
-        scrollbar = ttk.Scrollbar(
-            editor_frame,
-            orient="vertical",
-            command=editor.yview,
-            style="TScrollbar"
-        )
-
-        editor.configure(yscrollcommand=scrollbar.set)
-
-        # Layout
-        editor.grid(row=0, column=0, sticky="nsew")
-        scrollbar.grid(row=0, column=1, sticky="ns")
+        editor.pack(fill=tk.BOTH, expand=True, pady=(0, 20))
 
         # Button frame
         button_frame = ttk.Frame(editor_frame, style="TFrame")
-        button_frame.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(20, 0))
+        button_frame.pack(fill=tk.X)
 
         # Load Current button
         load_btn = ttk.Button(
             button_frame,
             text=get_text('load_current'),
+            command=lambda: self.load_current_configs(editor),
             style="Accent.TButton",
-            command=lambda: self.load_current_configs(editor)
+            padding=(10, 5)  # Add more padding for better visibility
         )
         load_btn.pack(side=tk.LEFT)
 
@@ -658,8 +659,9 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         apply_btn = ttk.Button(
             button_frame,
             text=get_text('apply_changes'),
+            command=lambda: self.apply_editor_changes(editor.get("1.0", tk.END), popup),
             style="Accent.TButton",
-            command=lambda: self.apply_editor_changes(editor.get("1.0", tk.END), popup)
+            padding=(10, 5)  # Add more padding for better visibility
         )
         apply_btn.pack(side=tk.RIGHT, padx=5)
 
@@ -667,17 +669,14 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         close_btn = ttk.Button(
             button_frame,
             text=get_text('close'),
+            command=popup.destroy,
             style="Accent.TButton",
-            command=popup.destroy
+            padding=(10, 5)  # Add more padding for better visibility
         )
         close_btn.pack(side=tk.RIGHT)
 
-        # Center the window
+        # Center the window and give it focus
         self.center_window(popup, width, height)
-
-        # Make the popup modal
-        popup.transient(self)
-        popup.grab_set()
         editor.focus_set()
 
     def apply_editor_changes(self, new_text, popup):
