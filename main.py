@@ -227,25 +227,26 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         y = (window.winfo_screenheight() // 2) - (height // 2)
         window.geometry(f'{width}x{height}+{x}+{y}')
 
-    def show_progress_window(self, title, width=600, height=400):
+    def show_progress_window(self, title):
         """Create and center a progress window"""
         window = tk.Toplevel(self)
         window.title(title)
         window.transient(self)
         window.grab_set()  # Make modal
 
-        # Center the window
-        self.center_window(window)
+        # Set minimum size
+        window.minsize(800, 600)
+        window.geometry("800x600")
 
         # Configure progress window
         progress_frame = ttk.Frame(window, padding="20", style="Card.TFrame")
         progress_frame.pack(fill=tk.BOTH, expand=True)
 
-        # Add text widget for progress
+        # Add text widget for progress with larger font size
         progress_text = scrolledtext.ScrolledText(
             progress_frame,
-            height=10,
-            font=("Consolas", 10),
+            height=20,  # Increased height
+            font=("Consolas", 11),  # Slightly larger font
             relief="flat",
             borderwidth=0,
             highlightthickness=0,
@@ -766,6 +767,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
                 get_text('test_complete'),
                 get_text('all_tests_successful')
             )
+
 
 
 def preprocess_json_text(json_text):
