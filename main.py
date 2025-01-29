@@ -19,7 +19,6 @@ from typing import List, Dict
 #Added import for credential manager
 from utils.credential_manager import CredentialManager
 
-
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -42,24 +41,47 @@ class PublishWorker(threading.Thread):
                     server_id = f"{config['server']}_{config['serverInstance']}"
                     logger.debug(f"Processing server: {server_id}")
 
-                    try:
-                        # Get credentials from credential manager
-                        creds = self.credential_manager.get_credentials(server_id)
-                        if creds is None:
-                            logger.error(f"No credentials found for {server_id}")
-                            self.result_queue.put(('failed', config['name'], "Credentials not available"))
+                    # Try to get existing credentials
+                    existing_creds = self.credential_manager.get_credentials(server_id)
+                    if existing_creds:
+                        username = existing_creds['username']
+                        password = existing_creds['password']
+                    else:
+                        # Request credentials from main thread
+                        logger.debug(f"Requesting credentials for {server_id}")
+                        self.result_queue.put(('need_credentials', server_id, config))
+
+                        # Wait for credentials response with timeout
+                        try:
+                            logger.debug(f"Waiting for credentials for {server_id}")
+                            response = self.result_queue.get(timeout=60)
+                            if response[0] != 'credentials_provided':
+                                logger.warning(f"No credentials provided for {server_id}")
+                                self.result_queue.put(('failed', config['name'], "No credentials provided"))
+                                continue
+                            username = response[1]
+                            password = response[2]
+                        except Empty:
+                            logger.error(f"Timeout waiting for credentials for {server_id}")
+                            self.result_queue.put(('failed', config['name'], "Credential request timed out"))
                             continue
 
+                    try:
                         logger.debug(f"Publishing to {server_id}")
                         success, message = publish_to_environment(
                             self.app_file_path,
                             config,
-                            creds['username'],
-                            creds['password']
+                            username,
+                            password
                         )
 
-                        self.result_queue.put(('progress', config['name'], success, message))
+                        if success:
+                            logger.debug(f"Successfully published to {server_id}, storing credentials")
+                            self.credential_manager.store_credentials(server_id, username, password)
+                        else:
+                            logger.warning(f"Failed to publish to {server_id}: {message}")
 
+                        self.result_queue.put(('progress', config['name'], success, message))
                     except Exception as e:
                         logger.error(f"Error publishing to {server_id}: {str(e)}\n{traceback.format_exc()}")
                         self.result_queue.put(('failed', config['name'], f"Error: {str(e)}"))
@@ -68,7 +90,7 @@ class PublishWorker(threading.Thread):
             logger.error(f"Worker thread error: {str(e)}\n{traceback.format_exc()}")
             self.result_queue.put(('error', str(e)))
 
-class BusinessCentralPublisher(TkinterDnD.Tk):
+class BCPublisherApp(TkinterDnD.Tk):
     def __init__(self):
         super().__init__()
 
@@ -107,6 +129,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         # Load saved configurations
         self.update_server_list()
+        self.progress_text = None  # Will store progress text widget
 
     def center_window(self, window, width=None, height=None):
         """Center any window on the screen"""
@@ -279,39 +302,42 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         self.publish_button.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(10, 10))
 
-    def show_progress_window(self, title):
-        """Create and center a progress window"""
-        window = tk.Toplevel(self)
-        window.title(title)
-        window.transient(self)
-        window.grab_set()  # Make modal
+    def show_progress_dialog(self, title):
+        """Create and center a progress dialog"""
+        dialog = tk.Toplevel(self)
+        dialog.title(title)
+        dialog.transient(self)
+        dialog.grab_set()
 
-        # Configure window background
-        window.configure(background='#1e1e2e')
+        # Configure dialog background
+        dialog.configure(background='#1e1e2e')
 
         # Main frame with padding
-        progress_frame = ttk.Frame(window, padding="20", style="Card.TFrame")
+        progress_frame = ttk.Frame(dialog, padding="20", style="Card.TFrame")
         progress_frame.pack(fill=tk.BOTH, expand=True)
         progress_frame.configure(style="Dark.TFrame")
 
-        # Add text widget for progress
-        progress_text = scrolledtext.ScrolledText(
+        # Create and store the progress text widget
+        self.progress_text = scrolledtext.ScrolledText(
             progress_frame,
             height=20,
+            width=80,
             font=("Consolas", 11),
             relief="flat",
             borderwidth=0,
             highlightthickness=0,
             padx=10,
-            pady=10
+            pady=10,
+            background='#1e1e2e',
+            foreground='#cdd6f4'
         )
-        progress_text.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
+        self.progress_text.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
 
         # Add close button
         close_btn = ttk.Button(
             progress_frame,
             text=get_text('close'),
-            command=window.destroy,
+            command=dialog.destroy,
             style="Accent.TButton"
         )
         close_btn.pack(fill=tk.X)
@@ -319,10 +345,11 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         # Set size and center
         width = 800
         height = 600
-        window.minsize(width, height)
-        self.center_window(window, width, height)
+        dialog.minsize(width, height)
+        self.center_window(dialog, width, height)
 
-        return window, progress_text, close_btn
+        return dialog, self.progress_text, close_btn
+
 
     def publish_extension(self):
         """Handle publishing extension to selected servers"""
@@ -342,150 +369,111 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             messagebox.showerror("Error", get_text('select_server'))
             return
 
-        logger.debug("Starting publish process")
-        logger.debug(f"Selected configs: {len(selected_configs)}")
+        # Show progress dialog
+        progress_dialog, progress_text, close_btn = self.show_progress_dialog(get_text('deployment_progress'))
 
-        # Show progress window
-        progress_window, progress_text, close_btn = self.show_progress_window(
-            get_text('deployment_progress')
-        )
-
-        def update_progress(message):
-            logger.debug(f"Progress update: {message}")
-            progress_text.insert(tk.END, f"{message}\n")
-            progress_text.see(tk.END)
-            progress_text.update()
-
-        update_progress("Starting deployment process...")
-
-        # First collect all needed credentials
-        credentials_collected = True
-        for config in selected_configs:
-            if config['environmentType'].lower() == 'onprem':
-                server_id = f"{config['server']}_{config['serverInstance']}"
-                update_progress(f"Checking credentials for {config['name']}...")
-                logger.debug(f"Checking credentials for server: {server_id}")
-
-                # Try to get existing credentials
-                existing_creds = self.credential_manager.get_credentials(server_id)
-                if not existing_creds:
-                    update_progress(f"Requesting credentials for {config['name']}...")
-                    logger.debug(f"Opening credential dialog for {server_id}")
-
-                    # Bring progress window to front
-                    progress_window.lift()
-                    progress_window.focus_force()
-                    progress_window.grab_set()
-                    progress_window.update()
-
-                    # Show credential dialog
-                    username, password = self.show_credential_dialog(config)
-
-                    if username and password:
-                        logger.debug(f"Storing credentials for {server_id}")
-                        self.credential_manager.store_credentials(server_id, username, password)
-                        update_progress(f"✓ Credentials stored for {config['name']}")
-                    else:
-                        logger.debug(f"No credentials provided for {server_id}")
-                        update_progress(f"✗ {config['name']}: No credentials provided")
-                        credentials_collected = False
-                        close_btn.configure(state="normal")
-                        return
-                else:
-                    logger.debug(f"Using existing credentials for {server_id}")
-                    update_progress(f"✓ Using stored credentials for {config['name']}")
-
-        if not credentials_collected:
-            return
-
-        update_progress("\nStarting deployment to selected servers...")
-
-        # Initialize tracking variables
-        self.deployment_results = []
-        self.result_queue = Queue()
-
-        # Create and start worker thread
-        logger.debug("Creating worker thread")
+        # Initialize worker thread
+        result_queue = Queue()
         worker = PublishWorker(
             self.app_file_path,
             selected_configs,
             self.credential_manager,
-            self.result_queue
+            result_queue
         )
+
+        def check_queue():
+            try:
+                while True:
+                    try:
+                        result = result_queue.get_nowait()
+                        if result[0] == 'need_credentials':
+                            server_id, config = result[1], result[2]
+                            username, password = self.show_credential_dialog(config)
+                            if username and password:
+                                result_queue.put(('credentials_provided', username, password))
+                            else:
+                                result_queue.put(('credentials_failed',))
+                        elif result[0] == 'progress':
+                            server_name, success, message = result[1], result[2], result[3]
+                            status = "✓" if success else "✗"
+                            self.update_progress(f"{status} {server_name}: {message}")
+                        elif result[0] == 'failed':
+                            server_name, message = result[1], result[2]
+                            self.update_progress(f"✗ {server_name}: {message}")
+                        elif result[0] == 'error':
+                            self.update_progress(f"Error: {result[1]}")
+                            break
+                    except Empty:
+                        break
+
+                if worker.is_alive():
+                    self.after(100, check_queue)
+                else:
+                    close_btn.config(state="normal")
+            except Exception as e:
+                self.update_progress(f"Error checking progress: {str(e)}")
+
         worker.start()
-        logger.debug("Worker thread started")
+        check_queue()
 
-        def show_summary():
-            update_progress(f"\n{get_text('deployment_summary')}")
-            successful = sum(1 for _, success, _ in self.deployment_results if success)
-            failed = len(self.deployment_results) - successful
-            update_progress(get_text('successful', count=successful))
-            update_progress(get_text('failed', count=failed))
-            close_btn.configure(state="normal")
-            logger.debug("Summary displayed")
 
-        self.show_summary = show_summary
-        self.timeout = datetime.now() + timedelta(minutes=5)
-        self.after(100, self.check_queue)
+    def handle_credential_requests(self, progress_window, close_btn):
+        for server_id, config in self.credential_requests.items():
+            username, password = self.show_credential_dialog(config)
+            if username and password:
+                logger.debug(f"Storing credentials for {server_id}")
+                self.credential_manager.store_credentials(server_id, username, password)
+                self.update_progress(f"✓ Credentials stored for {config['name']}")
+                self.result_queue.put(('credentials_provided', username, password))
+            else:
+                logger.debug(f"No credentials provided for {server_id}")
+                self.update_progress(f"✗ {config['name']}: No credentials provided")
+                self.credentials_collected = False
+                close_btn.configure(state="normal")
+                return
+
 
     def check_queue(self):
         """Check the result queue for updates and handle them"""
         try:
-            # Check for timeout
-            if datetime.now() >= self.timeout:
-                logger.info("Publish operation timeout reached")
-                # Handle timeout for remaining deployments
-                remaining = len(self.selected_configs) - len(self.deployment_results)
-                if remaining > 0:
-                    self.update_progress("\nTimeout reached, marking remaining deployments as failed...")
-                    for config in self.selected_configs:
-                        if not any(result[0] == config['name'] for result in self.deployment_results):
-                            self.deployment_results.append((config['name'], False, "Operation timed out"))
-                            self.update_progress(f"✗ {config['name']}: Operation timed out")
-                self.show_summary()
-                return
+            while True:
+                try:
+                    result = self.result_queue.get_nowait()
+                    if result[0] == 'need_credentials':
+                        server_id, config = result[1], result[2]
+                        username, password = self.show_credential_dialog(config)
+                        if username and password:
+                            self.result_queue.put(('credentials_provided', username, password))
+                        else:
+                            self.result_queue.put(('credentials_failed',))
+                    elif result[0] == 'progress':
+                        server_name, success, message = result[1], result[2], result[3]
+                        status = "✓" if success else "✗"
+                        self.update_progress(f"{status} {server_name}: {message}")
+                    elif result[0] == 'failed':
+                        server_name, message = result[1], result[2]
+                        self.update_progress(f"✗ {server_name}: {message}")
+                    elif result[0] == 'error':
+                        self.update_progress(f"Error: {result[1]}")
+                        break
+                except Empty:
+                    break
 
-            try:
-                result = self.result_queue.get_nowait()
-                logger.debug(f"Queue result received: {result[0]}")
-
-                if result[0] == 'progress':
-                    server_name, success, message = result[1], result[2], result[3]
-                    self.deployment_results.append((server_name, success, message))
-                    status = "✓" if success else "✗"
-                    self.update_progress(f"{status} {server_name}: {message}")
-
-                    if len(self.deployment_results) == len(self.selected_configs):
-                        self.show_summary()
-                        return
-
-                elif result[0] == 'failed':
-                    server_name, message = result[1], result[2]
-                    logger.warning(f"Operation failed for {server_name}: {message}")
-                    self.deployment_results.append((server_name, False, message))
-                    self.update_progress(f"✗ {server_name}: {message}")
-
-                    # Check if all servers are processed
-                    if len(self.deployment_results) == len(self.selected_configs):
-                        self.show_summary()
-                        return
-
-                elif result[0] == 'error':
-                    logger.error(f"Error in publish operation: {result[1]}")
-                    self.update_progress(f"Error: {result[1]}")
-                    self.show_summary()
-                    return
-
-            except Empty:
-                # No results available, schedule next check
-                pass
-
-            # Schedule next check with shorter interval
-            self.after(50, self.check_queue)
-
+            if worker.is_alive():
+                self.after(100, self.check_queue)
+            else:
+                close_btn.config(state="normal")
         except Exception as e:
             logger.error(f"Error in check_queue: {str(e)}\n{traceback.format_exc()}")
             self.update_progress(f"Error checking progress: {str(e)}")
+
+    def update_progress(self, message):
+        """Update progress text in the progress window"""
+        if self.progress_text:
+            logger.debug(f"Progress update: {message}")
+            self.progress_text.insert(tk.END, f"{message}\n")
+            self.progress_text.see(tk.END)
+            self.progress_text.update()
 
     def show_credential_dialog(self, server_config):
         """Show dialog to input server credentials"""
@@ -577,7 +565,17 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         cancel_btn.pack(side=tk.LEFT, padx=(0, 5), expand=True)
         connect_btn.pack(side=tk.RIGHT, padx=(5, 0), expand=True)
 
-        # Center the dialog
+        # Bind Enter key to submit
+        def on_return(event):
+            on_ok()
+
+        dialog.bind('<Return>', on_return)
+        password_entry.bind('<Return>', on_return)
+
+        # Set initial focus to username field
+        username_entry.focus_set()
+
+        # Center dialog on parent window
         self.center_window(dialog, width, height)
 
         # Make dialog modal
@@ -805,7 +803,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             messagebox.showinfo("Info", get_text('no_configs'))
 
     def test_selected_connections(self):
-        """Test connection to selected servers"""
+        """Testconnection to selected servers"""
         selected_items = self.server_tree.get_children()
         selected_configs = []
         for item in selected_items:
@@ -823,26 +821,28 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         progress_window, progress_text, close_btn = self.show_progress_window(get_text('connection_test_progress'))
 
         def update_progress(message):
-            progress_text.insert(tk.END, f"{message}\n")
-            progress_text.see(tk.END)
-            progress_text.update()
+            if progress_text:
+                progress_text.insert(tk.END, f"{message}\n")
+                progress_text.see(tk.END)
+                progress_text.update()
 
         # Test connection to each selected server
         test_results = []
         for config in selected_configs:
-            update_progress(get_text('testing_connection', server=config['name']))
+            update_progress(f"Testing connection to {config['name']}...")
             success, message = test_server_connection(config)
             test_results.append((config['name'], success, message))
 
             # Update progress with result
             status = "✓" if success else "✗"
             update_progress(f"{status} {message}")
+
         # Show final summary
-        update_progress(f"\n{get_text('test_summary')}")
+        update_progress("\nTest Summary:")
         successful = sum(1 for _, success, _ in test_results if success)
         failed = len(test_results) - successful
-        update_progress(get_text('successful', count=successful))
-        update_progress(get_text('failed', count=failed))
+        update_progress(f"Successful connections: {successful}")
+        update_progress(f"Failed connections: {failed}")
 
         # Enable close button
         close_btn.configure(state="normal")
@@ -877,5 +877,5 @@ def preprocess_json_text(json_text):
     return processed_text
 
 if __name__ == "__main__":
-    app = BusinessCentralPublisher()
+    app = BCPublisherApp()
     app.mainloop()
