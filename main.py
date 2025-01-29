@@ -366,7 +366,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         # Set fixed size
         width = 400
-        height = 250
+        height = 300  # Increased height
         dialog.minsize(width, height)
         dialog.resizable(False, False)
 
@@ -407,6 +407,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         # Button frame
         button_frame = ttk.Frame(main_frame)
         button_frame.grid(row=5, column=0, sticky="ew")
+        button_frame.grid_columnconfigure(0, weight=1)
         button_frame.grid_columnconfigure(1, weight=1)
 
         result = {'username': None, 'password': None}
@@ -419,24 +420,24 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         def on_cancel():
             dialog.destroy()
 
-        # Buttons
+        # Buttons - now with equal width and proper spacing
         cancel_btn = ttk.Button(
             button_frame,
             text="Cancel",
             command=on_cancel,
             style="Secondary.TButton",
-            width=12
+            width=15  # Increased width
         )
-        cancel_btn.grid(row=0, column=0, padx=(0, 10))
+        cancel_btn.grid(row=0, column=0, padx=5, sticky="e")
 
         ok_btn = ttk.Button(
             button_frame,
             text="Connect",
             command=on_ok,
             style="Accent.TButton",
-            width=12
+            width=15  # Same width as cancel button
         )
-        ok_btn.grid(row=0, column=1, sticky="e")
+        ok_btn.grid(row=0, column=1, padx=5, sticky="w")
 
         # Get existing credentials
         server_id = f"{server_config['server']}_{server_config['serverInstance']}"
