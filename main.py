@@ -693,7 +693,8 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         # Create progress dialog
         progress_window = tk.Toplevel(self)
         progress_window.title(get_text('connection_test_progress'))
-        progress_window.geometry("400x300")
+        progress_window.minsize(800, 600)  # Increased size
+        progress_window.geometry("800x600")
         self.center_window(progress_window)
 
         # Configure progress window
@@ -703,8 +704,8 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         # Add text widget for progress
         progress_text = scrolledtext.ScrolledText(
             progress_frame,
-            height=10,
-            font=("Consolas", 10),
+            height=20,  # Increased height
+            font=("Consolas", 11),  # Slightly larger font
             relief="flat",
             borderwidth=0,
             highlightthickness=0,
@@ -713,7 +714,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         )
         progress_text.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
 
-        # Add close button
+        # Add close button (initially disabled)
         close_btn = ttk.Button(
             progress_frame,
             text=get_text('close'),
@@ -746,19 +747,8 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         update_progress(get_text('successful', count=successful))
         update_progress(get_text('failed', count=failed))
 
-        # Show error message if any tests failed
-        if failed > 0:
-            messagebox.showerror(
-                get_text('test_complete'),
-                get_text('test_complete_with_errors', count=failed)
-            )
-        else:
-            messagebox.showinfo(
-                get_text('test_complete'),
-                get_text('all_tests_successful')
-            )
-
-
+        # Enable close button
+        close_btn.configure(state="normal")
 
 def preprocess_json_text(json_text):
     """
