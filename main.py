@@ -381,7 +381,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         # Title with server name
         ttk.Label(
             header_frame,
-            text=f"Enter credentials for server: {server_config['name']}",
+            text=f"Authentication Required\n{server_config['name']}",
             style="Header.TLabel",
             font=("Segoe UI", 14, "bold"),
             justify=tk.CENTER
@@ -447,11 +447,10 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         def on_cancel():
             dialog.destroy()
 
-        # Button container with better styling
+        # Modern styled buttons with better visibility
         button_frame = ttk.Frame(dialog_frame, style="TFrame")
         button_frame.pack(fill=tk.X, pady=(0, 10))
 
-        # Modern styled buttons with better visibility
         cancel_btn = ttk.Button(
             button_frame,
             text="Cancel",
