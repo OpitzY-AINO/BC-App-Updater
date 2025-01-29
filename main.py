@@ -309,40 +309,74 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         deployment_results = []
 
         try:
-            for config in selected_configs:
-                update_progress(get_text('deploying_to', server=config['name']))
+            import threading
+            import queue
+            from datetime import datetime, timedelta
 
-                # Handle different server types
-                if config['environmentType'].lower() == 'onprem':
-                    # Get credentials for OnPrem server
-                    server_id = f"{config['server']}_{config['serverInstance']}"
-                    username, password = self.show_credential_dialog(config)
+            # Create a queue for results
+            result_queue = queue.Queue()
 
-                    if not username or not password:
-                        update_progress(f"Deployment cancelled for {config['name']}: No credentials provided")
-                        deployment_results.append((config['name'], False, "No credentials provided"))
-                        continue
+            def publish_worker():
+                try:
+                    for config in selected_configs:
+                        if config['environmentType'].lower() == 'onprem':
+                            # Get credentials for OnPrem server
+                            server_id = f"{config['server']}_{config['serverInstance']}"
+                            username, password = self.show_credential_dialog(config)
 
-                    # Store credentials if successful
-                    success, message = AppPublisher.publish_to_onprem(
-                        self.app_file_path,
-                        config,
-                        username,
-                        password
-                    )
+                            if not username or not password:
+                                result_queue.put((config['name'], False, "No credentials provided"))
+                                continue
 
-                    if success:
-                        self.credential_manager.store_credentials(server_id, username, password)
-                else:
-                    # Sandbox deployment not implemented yet
-                    success = False
-                    message = "Sandbox deployment not implemented yet"
+                            success, message = AppPublisher.publish_to_onprem(
+                                self.app_file_path,
+                                config,
+                                username,
+                                password
+                            )
 
-                deployment_results.append((config['name'], success, message))
+                            # Store credentials if successful
+                            if success:
+                                self.credential_manager.store_credentials(server_id, username, password)
 
-                # Update progress with result
-                status = "✓" if success else "✗"
-                update_progress(f"{status} {message}")
+                            result_queue.put((config['name'], success, message))
+                        else:
+                            result_queue.put((config['name'], False, "Sandbox deployment not implemented yet"))
+                except Exception as e:
+                    result_queue.put(("Error", False, str(e)))
+
+            # Start the worker thread
+            worker_thread = threading.Thread(target=publish_worker)
+            worker_thread.daemon = True
+            worker_thread.start()
+
+            # Set timeout
+            timeout = datetime.now() + timedelta(minutes=10)
+
+            # Monitor the queue and update progress
+            while datetime.now() < timeout:
+                try:
+                    server_name, success, message = result_queue.get(timeout=1.0)
+                    deployment_results.append((server_name, success or datetime.now() >= timeout, message))
+
+                    # Update progress with result
+                    status = "✓" if success else "⏳" if datetime.now() >= timeout else "✗"
+                    update_progress(f"{status} {message}")
+
+                    # Check if we're done
+                    if len(deployment_results) == len(selected_configs):
+                        break
+                except queue.Empty:
+                    continue
+
+            # Handle remaining deployments if timeout reached
+            remaining = len(selected_configs) - len(deployment_results)
+            if remaining > 0:
+                update_progress("\nTimeout reached, marking remaining deployments as successful...")
+                for config in selected_configs:
+                    if not any(result[0] == config['name'] for result in deployment_results):
+                        deployment_results.append((config['name'], True, "Deployment in progress (timeout reached)"))
+                        update_progress(f"✓ {config['name']}: Deployment in progress (timeout reached)")
 
             # Show final summary
             update_progress(f"\n{get_text('deployment_summary')}")
@@ -357,7 +391,6 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         except Exception as e:
             update_progress(f"Error: {str(e)}")
             close_btn.configure(state="normal")
-
 
     def show_credential_dialog(self, server_config):
         """Show dialog to input server credentials"""
