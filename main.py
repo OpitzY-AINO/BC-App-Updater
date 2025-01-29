@@ -370,9 +370,13 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         dialog.minsize(width, height)
         dialog.resizable(False, False)
 
+        # Configure dialog background
+        dialog.configure(background='#1e1e2e')
+
         # Main frame with padding
         main_frame = ttk.Frame(dialog, padding=20, style="Card.TFrame")
         main_frame.grid(row=0, column=0, sticky="nsew")
+        main_frame.configure(style="Dark.TFrame")
 
         # Configure grid
         dialog.grid_rowconfigure(0, weight=1)
@@ -386,27 +390,38 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             text=header_text,
             style="Header.TLabel",
             justify=tk.CENTER,
-            font=("Segoe UI", 14, "bold")
+            font=("Segoe UI", 14, "bold"),
+            background='#1e1e2e',
+            foreground='#cdd6f4'
         )
         header.grid(row=0, column=0, columnspan=2, pady=(0, 20))
 
         # Username
-        ttk.Label(main_frame, text="Username").grid(
-            row=1, column=0, sticky="w", pady=(0, 5)
+        username_label = ttk.Label(
+            main_frame, 
+            text="Username",
+            background='#1e1e2e',
+            foreground='#cdd6f4'
         )
+        username_label.grid(row=1, column=0, sticky="w", pady=(0, 5))
         username_entry = ttk.Entry(main_frame)
         username_entry.grid(row=2, column=0, sticky="ew", pady=(0, 15))
 
         # Password
-        ttk.Label(main_frame, text="Password").grid(
-            row=3, column=0, sticky="w", pady=(0, 5)
+        password_label = ttk.Label(
+            main_frame, 
+            text="Password",
+            background='#1e1e2e',
+            foreground='#cdd6f4'
         )
+        password_label.grid(row=3, column=0, sticky="w", pady=(0, 5))
         password_entry = ttk.Entry(main_frame, show="•")
         password_entry.grid(row=4, column=0, sticky="ew", pady=(0, 20))
 
         # Button frame
         button_frame = ttk.Frame(main_frame)
         button_frame.grid(row=5, column=0, sticky="ew")
+        button_frame.configure(style="Dark.TFrame")
         button_frame.grid_columnconfigure(0, weight=1)
         button_frame.grid_columnconfigure(1, weight=1)
 
@@ -420,13 +435,13 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         def on_cancel():
             dialog.destroy()
 
-        # Buttons - now with equal width and proper spacing
+        # Buttons - same size and styling
         cancel_btn = ttk.Button(
             button_frame,
             text="Cancel",
             command=on_cancel,
             style="Secondary.TButton",
-            width=15  # Increased width
+            width=15
         )
         cancel_btn.grid(row=0, column=0, padx=5, sticky="e")
 
@@ -435,7 +450,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             text="Connect",
             command=on_ok,
             style="Accent.TButton",
-            width=15  # Same width as cancel button
+            width=15
         )
         ok_btn.grid(row=0, column=1, padx=5, sticky="w")
 
