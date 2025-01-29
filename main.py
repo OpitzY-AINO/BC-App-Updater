@@ -416,6 +416,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
     def check_queue(self):
         """Check the result queue for updates and handle them"""
         try:
+            # Check for timeout
             if datetime.now() >= self.timeout:
                 logger.info("Publish operation timeout reached")
                 # Handle timeout for remaining deployments
@@ -427,21 +428,29 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
                             self.deployment_results.append((config['name'], True, "Deployment in progress (timeout reached)"))
                             self.update_progress(f"✓ {config['name']}: Deployment in progress (timeout reached)")
 
-                # Show final summary
                 self.show_summary()
                 return
 
             try:
                 result = self.result_queue.get_nowait()
+                logger.debug(f"Queue result received: {result[0]}")
+
                 if result[0] == 'need_credentials':
                     # Handle credential request
                     server_id, config = result[1], result[2]
-                    logger.debug(f"Handling credential request for {server_id}")
-                    username, password = self.show_credential_dialog(config)
-                    if username and password:
-                        self.result_queue.put(('credentials_provided', username, password))
-                    else:
-                        self.result_queue.put(('credentials_failed',))
+                    logger.debug(f"Showing credential dialog for {server_id}")
+
+                    def show_dialog():
+                        username, password = self.show_credential_dialog(config)
+                        if username and password:
+                            logger.debug(f"Credentials provided for {server_id}")
+                            self.result_queue.put(('credentials_provided', username, password))
+                        else:
+                            logger.debug(f"No credentials provided for {server_id}")
+                            self.result_queue.put(('credentials_failed',))
+
+                    # Schedule dialog to run in main thread
+                    self.after(0, show_dialog)
 
                 elif result[0] == 'progress':
                     # Handle progress update
@@ -466,9 +475,10 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
             # Schedule next check
             self.after(100, self.check_queue)
+
         except Exception as e:
             logger.error(f"Error in check_queue: {str(e)}\n{traceback.format_exc()}")
-            messagebox.showerror("Error", f"An error occurred while checking the queue: {str(e)}")
+            self.update_progress(f"Error checking progress: {str(e)}")
 
     def show_credential_dialog(self, server_config):
         """Show dialog to input server credentials"""
@@ -811,7 +821,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             messagebox.showerror("Error", get_text('select_server_test'))
             return
 
-                # Create and show progress window
+        # Create and show progress window
         progress_window, progress_text, close_btn = self.show_progress_window(get_text('connection_test_progress'))
 
         def update_progress(message):
