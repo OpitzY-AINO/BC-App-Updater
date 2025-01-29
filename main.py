@@ -352,20 +352,10 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             # Enable close button
             close_btn.configure(state="normal")
 
-            # Show error message if any deployments failed
-            if failed > 0:
-                messagebox.showerror(
-                    get_text('deployment_complete'),
-                    get_text('deployment_complete_with_errors', count=failed)
-                )
-            else:
-                messagebox.showinfo(
-                    get_text('deployment_complete'),
-                    get_text('all_deployments_successful')
-                )
-
         except Exception as e:
-            messagebox.showerror("Error", str(e))
+            update_progress(f"Error: {str(e)}")
+            close_btn.configure(state="normal")
+
 
     def show_credential_dialog(self, server_config):
         """Show dialog to input server credentials"""
