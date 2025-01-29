@@ -47,8 +47,19 @@ def get_credentials(parent, server_config):
     def on_cancel():
         dialog.reject()
 
+    # Connect signals
     cancel_btn.clicked.connect(on_cancel)
     connect_btn.clicked.connect(on_ok)
+
+    # Handle Enter key in password field
+    def handle_return_key(event):
+        if event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter:
+            on_ok()
+            return True
+        return False
+
+    password_entry.keyPressEvent = handle_return_key
+    username_entry.returnPressed.connect(lambda: password_entry.setFocus())
 
     if dialog.exec() == QDialog.DialogCode.Accepted:
         return result

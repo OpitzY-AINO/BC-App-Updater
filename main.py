@@ -16,16 +16,20 @@ import logging
 import traceback
 from datetime import datetime, timedelta
 from typing import List, Dict
+#Added import for credential manager
+from utils.credential_manager import CredentialManager
+
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 class PublishWorker(threading.Thread):
-    def __init__(self, app_file_path: str, configs: List[Dict], result_queue: Queue):
+    def __init__(self, app_file_path: str, configs: List[Dict], credential_manager: CredentialManager, result_queue: Queue):
         super().__init__()
         self.app_file_path = app_file_path
         self.configs = configs
+        self.credential_manager = credential_manager
         self.result_queue = result_queue
         self.daemon = True
         logger.debug("PublishWorker initialized")
@@ -39,18 +43,23 @@ class PublishWorker(threading.Thread):
                     logger.debug(f"Processing server: {server_id}")
 
                     try:
+                        # Get credentials from credential manager
+                        creds = self.credential_manager.get_credentials(server_id)
+                        if creds is None:
+                            logger.error(f"No credentials found for {server_id}")
+                            self.result_queue.put(('failed', config['name'], "Credentials not available"))
+                            continue
+
                         logger.debug(f"Publishing to {server_id}")
                         success, message = publish_to_environment(
                             self.app_file_path,
-                            config
+                            config,
+                            creds['username'],
+                            creds['password']
                         )
 
-                        if success:
-                            logger.debug(f"Successfully published to {server_id}")
-                        else:
-                            logger.warning(f"Failed to publish to {server_id}: {message}")
-
                         self.result_queue.put(('progress', config['name'], success, message))
+
                     except Exception as e:
                         logger.error(f"Error publishing to {server_id}: {str(e)}\n{traceback.format_exc()}")
                         self.result_queue.put(('failed', config['name'], f"Error: {str(e)}"))
@@ -86,6 +95,8 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         # Application state
         self.app_file_path = None
         self.config_manager = ConfigurationManager()
+        #Added credential manager instance
+        self.credential_manager = CredentialManager()
 
         # Configure main window grid weights
         self.grid_rowconfigure(0, weight=1)
@@ -320,8 +331,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             return
 
         selected_configs = []
-        selected_items = self.server_tree.get_children()
-        for item in selected_items:
+        for item in self.server_tree.get_children():
             values = self.server_tree.item(item)['values']
             if values[0] == "☑":
                 index = int(item.split('_')[1])
@@ -335,8 +345,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         logger.debug("Starting publish process")
         logger.debug(f"Selected configs: {len(selected_configs)}")
 
-
-        # Create and show progress window
+        # Show progress window
         progress_window, progress_text, close_btn = self.show_progress_window(
             get_text('deployment_progress')
         )
@@ -347,16 +356,60 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             progress_text.see(tk.END)
             progress_text.update()
 
-        # Initialize instance variables for progress tracking
-        self.update_progress = update_progress
+        update_progress("Starting deployment process...")
+
+        # First collect all needed credentials
+        credentials_collected = True
+        for config in selected_configs:
+            if config['environmentType'].lower() == 'onprem':
+                server_id = f"{config['server']}_{config['serverInstance']}"
+                update_progress(f"Checking credentials for {config['name']}...")
+                logger.debug(f"Checking credentials for server: {server_id}")
+
+                # Try to get existing credentials
+                existing_creds = self.credential_manager.get_credentials(server_id)
+                if not existing_creds:
+                    update_progress(f"Requesting credentials for {config['name']}...")
+                    logger.debug(f"Opening credential dialog for {server_id}")
+
+                    # Bring progress window to front
+                    progress_window.lift()
+                    progress_window.focus_force()
+                    progress_window.grab_set()
+                    progress_window.update()
+
+                    # Show credential dialog
+                    username, password = self.show_credential_dialog(config)
+
+                    if username and password:
+                        logger.debug(f"Storing credentials for {server_id}")
+                        self.credential_manager.store_credentials(server_id, username, password)
+                        update_progress(f"✓ Credentials stored for {config['name']}")
+                    else:
+                        logger.debug(f"No credentials provided for {server_id}")
+                        update_progress(f"✗ {config['name']}: No credentials provided")
+                        credentials_collected = False
+                        close_btn.configure(state="normal")
+                        return
+                else:
+                    logger.debug(f"Using existing credentials for {server_id}")
+                    update_progress(f"✓ Using stored credentials for {config['name']}")
+
+        if not credentials_collected:
+            return
+
+        update_progress("\nStarting deployment to selected servers...")
+
+        # Initialize tracking variables
         self.deployment_results = []
         self.result_queue = Queue()
 
-        # Create and start the worker thread
+        # Create and start worker thread
         logger.debug("Creating worker thread")
         worker = PublishWorker(
             self.app_file_path,
             selected_configs,
+            self.credential_manager,
             self.result_queue
         )
         worker.start()
@@ -372,10 +425,8 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
             logger.debug("Summary displayed")
 
         self.show_summary = show_summary
+        self.timeout = datetime.now() + timedelta(minutes=5)
         self.after(100, self.check_queue)
-        self.timeout = datetime.now() + timedelta(minutes=5) #Setting a timeout of 5 minutes
-        self.selected_configs = selected_configs #Store selected configs for timeout handling
-
 
     def check_queue(self):
         """Check the result queue for updates and handle them"""
@@ -470,7 +521,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         # Username
         username_label = ttk.Label(
-            main_frame, 
+            main_frame,
             text="Username",
             background='#1e1e2e',
             foreground='#cdd6f4'
@@ -481,7 +532,7 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 
         # Password
         password_label = ttk.Label(
-            main_frame, 
+            main_frame,
             text="Password",
             background='#1e1e2e',
             foreground='#cdd6f4'
@@ -799,10 +850,8 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
 def preprocess_json_text(json_text):
     """
     Preprocess JSON text to handle common formatting issues.
-
-    Args:
+    Args    :
         json_text (str): Raw JSON text
-
     Returns:
         str: Preprocessed JSON text
     """
@@ -820,7 +869,8 @@ def preprocess_json_text(json_text):
         pass
 
     # Check if we have multiple objects without array brackets
-    stripped = processed_text.strip()    if stripped.count('{') > 1 and not (stripped.startswith('[') and stripped.endswith(']')):
+    stripped = processed_text.strip()
+    if stripped.count('{') > 1 and not (stripped.startswith('[') and stripped.endswith(']')):
         # Wrap in array brackets if not already wrapped and contains multiple objects
         processed_text = f'[{processed_text}]'
 

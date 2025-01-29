@@ -23,7 +23,7 @@ def test_server_connection(config: dict) -> tuple:
         error_msg = str(e)
         return False, f"Connection test failed for {config['name']}: {error_msg}"
 
-def publish_to_environment(app_path: str, config: dict) -> tuple:
+def publish_to_environment(app_path: str, config: dict, username: str = None, password: str = None) -> tuple:
     """Publish an app to a specific Business Central environment."""
     env_type = config['environmentType'].lower()
     app_name = os.path.basename(app_path)
@@ -34,7 +34,11 @@ def publish_to_environment(app_path: str, config: dict) -> tuple:
         if env_type == 'sandbox':
             message += f" (Sandbox: {config['environmentName']})"
         else:
-            message += f" (OnPrem: {config['serverInstance']})"
+            message += f" (OnPrem: {config['serverInstance']}"
+            if username:
+                message += f" as {username})"
+            else:
+                message += ")"
         return True, message
 
     except Exception as e:
