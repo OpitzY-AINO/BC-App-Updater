@@ -44,6 +44,7 @@ TRANSLATIONS = {
     'Veröffentlichung mit {count} Fehler(n) abgeschlossen.\nDetails im Fortschrittsfenster prüfen.',
     'all_deployments_successful':
     'Alle Veröffentlichungen erfolgreich abgeschlossen!',
+    'no_configs': 'Keine Konfigurationen vorhanden',
 
     # Errors
     'select_app': 'Bitte wählen Sie zuerst eine APP-Datei aus',
