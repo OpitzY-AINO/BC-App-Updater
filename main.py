@@ -362,71 +362,52 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         dialog = tk.Toplevel(self)
         dialog.title("Server Authentication")
         dialog.transient(self)
-        dialog.grab_set()  # Make modal
+        dialog.grab_set()
 
         # Set fixed size
-        width = 450
-        height = 320
+        width = 400
+        height = 250
         dialog.minsize(width, height)
         dialog.resizable(False, False)
 
-        # Main frame
-        main_frame = ttk.Frame(dialog, padding="20", style="Card.TFrame")
-        main_frame.pack(fill=tk.BOTH, expand=True)
+        # Main frame with padding
+        main_frame = ttk.Frame(dialog, padding=20, style="Card.TFrame")
+        main_frame.grid(row=0, column=0, sticky="nsew")
 
-        # Header with server name
-        header_frame = ttk.Frame(main_frame, style="TFrame")
-        header_frame.pack(fill=tk.X, pady=(0, 20))
+        # Configure grid
+        dialog.grid_rowconfigure(0, weight=1)
+        dialog.grid_columnconfigure(0, weight=1)
+        main_frame.grid_columnconfigure(0, weight=1)
 
-        ttk.Label(
-            header_frame,
-            text=f"Authentication Required\n{server_config['name']}",
+        # Header
+        header_text = f"Authentication Required\n{server_config['name']}"
+        header = ttk.Label(
+            main_frame,
+            text=header_text,
             style="Header.TLabel",
             justify=tk.CENTER,
             font=("Segoe UI", 14, "bold")
-        ).pack(fill=tk.X)
-
-        # Input container
-        input_frame = ttk.Frame(main_frame, style="Card.TFrame", padding=20)
-        input_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 20))
-
-        # Username field
-        username_label = ttk.Label(
-            input_frame,
-            text="Username",
-            style="TLabel",
-            font=("Segoe UI", 10)
         )
-        username_label.pack(fill=tk.X, pady=(0, 5))
+        header.grid(row=0, column=0, columnspan=2, pady=(0, 20))
 
-        username_entry = ttk.Entry(
-            input_frame,
-            font=("Segoe UI", 10)
+        # Username
+        ttk.Label(main_frame, text="Username").grid(
+            row=1, column=0, sticky="w", pady=(0, 5)
         )
-        username_entry.pack(fill=tk.X, pady=(0, 15))
+        username_entry = ttk.Entry(main_frame)
+        username_entry.grid(row=2, column=0, sticky="ew", pady=(0, 15))
 
-        # Password field
-        password_label = ttk.Label(
-            input_frame,
-            text="Password",
-            style="TLabel",
-            font=("Segoe UI", 10)
+        # Password
+        ttk.Label(main_frame, text="Password").grid(
+            row=3, column=0, sticky="w", pady=(0, 5)
         )
-        password_label.pack(fill=tk.X, pady=(0, 5))
+        password_entry = ttk.Entry(main_frame, show="•")
+        password_entry.grid(row=4, column=0, sticky="ew", pady=(0, 20))
 
-        password_entry = ttk.Entry(
-            input_frame,
-            font=("Segoe UI", 10),
-            show="•"
-        )
-        password_entry.pack(fill=tk.X)
-
-        # Get existing credentials
-        server_id = f"{server_config['server']}_{server_config['serverInstance']}"
-        existing_creds = self.credential_manager.get_credentials(server_id)
-        if existing_creds:
-            username_entry.insert(0, existing_creds['username'])
-            password_entry.insert(0, existing_creds['password'])
+        # Button frame
+        button_frame = ttk.Frame(main_frame)
+        button_frame.grid(row=5, column=0, sticky="ew")
+        button_frame.grid_columnconfigure(1, weight=1)
 
         result = {'username': None, 'password': None}
 
@@ -438,33 +419,31 @@ class BusinessCentralPublisher(TkinterDnD.Tk):
         def on_cancel():
             dialog.destroy()
 
-        # Button container
-        button_frame = ttk.Frame(main_frame, style="TFrame")
-        button_frame.pack(fill=tk.X, side=tk.BOTTOM)
-
-        # Button frame for proper alignment
-        btn_container = ttk.Frame(button_frame, style="TFrame")
-        btn_container.pack(fill=tk.X)
-
-        # Cancel button
+        # Buttons
         cancel_btn = ttk.Button(
-            btn_container,
+            button_frame,
             text="Cancel",
             command=on_cancel,
             style="Secondary.TButton",
-            width=15
+            width=12
         )
-        cancel_btn.pack(side=tk.LEFT, padx=(0, 5))
+        cancel_btn.grid(row=0, column=0, padx=(0, 10))
 
-        # OK button
         ok_btn = ttk.Button(
-            btn_container,
+            button_frame,
             text="Connect",
             command=on_ok,
             style="Accent.TButton",
-            width=15
+            width=12
         )
-        ok_btn.pack(side=tk.LEFT)
+        ok_btn.grid(row=0, column=1, sticky="e")
+
+        # Get existing credentials
+        server_id = f"{server_config['server']}_{server_config['serverInstance']}"
+        existing_creds = self.credential_manager.get_credentials(server_id)
+        if existing_creds:
+            username_entry.insert(0, existing_creds['username'])
+            password_entry.insert(0, existing_creds['password'])
 
         # Center the dialog
         self.center_window(dialog, width, height)
